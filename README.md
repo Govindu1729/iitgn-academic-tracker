@@ -24,14 +24,12 @@ Academic tracking system for IIT Gandhinagar students.
 - Node.js (v18 or higher)
 - MongoDB (local or Atlas)
 
-### Backend Setup
+### Backend + Frontend Setup
 ```bash
 cd backend
 npm install
 npm run dev
 
-### Frontend Setup
-```bash
 cd frontend
 npm install
 npm run dev
