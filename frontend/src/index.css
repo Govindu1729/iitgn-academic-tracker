@@ -1,0 +1,84 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply bg-gray-50 text-gray-900 antialiased;
+  }
+  
+  /* Responsive font sizes */
+  h1 {
+    @apply text-2xl md:text-3xl lg:text-4xl font-bold;
+  }
+  
+  h2 {
+    @apply text-xl md:text-2xl font-semibold;
+  }
+  
+  /* Better touch targets for mobile */
+  button, 
+  a,
+  [role="button"] {
+    @apply min-h-[44px] md:min-h-0;
+  }
+  
+  /* Responsive tables */
+  table {
+    @apply w-full text-sm md:text-base;
+  }
+  
+  th, td {
+    @apply px-3 py-2 md:px-6 md:py-3;
+  }
+}
+
+@layer components {
+  /* Responsive container */
+  .container-responsive {
+    @apply px-3 sm:px-4 md:px-6 lg:px-8 mx-auto;
+  }
+  
+  /* Responsive card grid */
+  .card-grid {
+    @apply grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 md:gap-4 lg:gap-6;
+  }
+  
+  /* Responsive stats cards */
+  .stat-card {
+    @apply bg-white rounded-lg shadow-md p-3 md:p-4 lg:p-6;
+  }
+  
+  /* Responsive buttons */
+  .btn-responsive {
+    @apply px-3 py-1.5 md:px-4 md:py-2 text-sm md:text-base rounded-lg transition;
+  }
+  
+  /* Mobile-friendly table wrapper */
+  .table-responsive {
+    @apply overflow-x-auto -mx-3 md:mx-0;
+  }
+  
+  .table-responsive table {
+    @apply min-w-[600px] md:min-w-full;
+  }
+}
+
+/* Custom scrollbar for better mobile experience */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f1f1f1;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
