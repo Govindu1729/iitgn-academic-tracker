@@ -29,3 +29,9 @@ Academic tracking system for IIT Gandhinagar students.
 cd backend
 npm install
 npm run dev
+
+### Frontend Setup
+```bash
+cd frontend
+npm install
+npm run dev
