@@ -19,9 +19,13 @@ Academic tracking system for IIT Gandhinagar students.
 - Frontend: React, Vite, Tailwind CSS, Recharts
 
 ## Setup
-```bash
-# Backend
-cd backend && npm install && npm run dev
 
-# Frontend (new terminal)
-cd frontend && npm install && npm run dev
+### Prerequisites
+- Node.js (v18 or higher)
+- MongoDB (local or Atlas)
+
+### Backend Setup
+```bash
+cd backend
+npm install
+npm run dev
