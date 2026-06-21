@@ -1,30 +1,14 @@
+// frontend/src/components/CourseSearchInput.jsx
 import { useState, useEffect, useRef } from 'react';
 
-// frontend/src/components/CourseSearchInput.jsx
-// Add this logic inside your component
-
-const getApplicableCourses = (userAdmissionYear) => {
-  const yearRange = `${userAdmissionYear}-${String(Number(userAdmissionYear) + 1).slice(-2)}`;
-  
-  return COURSE_CATALOG.filter(course => {
-    // If no batch restriction, show for all
-    if (!course.applicableBatches) return true;
-    // Check if course is applicable for this batch
-    return course.applicableBatches.includes(yearRange);
-  });
-};
-
-// Then in your component, use this filtered list:
-const userAdmissionYear = // get from user context or props
-const applicableCourses = getApplicableCourses(userAdmissionYear);
-
-// Full course catalog
+// Full course catalog - MOVED OUTSIDE COMPONENT (this is correct)
 const COURSE_CATALOG = [
   // First Year Institute Core
   { courseCode: 'FP100', courseName: 'Foundation Programme', credits: 4, basketType: 'Institute Core', department: 'Institute' },
   { courseCode: 'ES101', courseName: 'Engineering Graphics', credits: 3, basketType: 'Institute Core', department: 'Institute' },
   { courseCode: 'ES112', courseName: 'Computing', credits: 3, basketType: 'Institute Core', department: 'Institute' },
   { courseCode: 'ES115', courseName: 'Design, Innovation and Prototyping', credits: 5, basketType: 'Institute Core', department: 'Institute' },
+  { courseCode: 'ES119', courseName: 'Principles of Artificial Intelligence', credits: 4, basketType: 'Institute Core', department: 'Institute' },
   { courseCode: 'MA103', courseName: 'Calculus of Single Variable and Linear Algebra', credits: 4, basketType: 'Institute Core', department: 'Maths' },
   { courseCode: 'HS191', courseName: 'Introduction to Writing I', credits: 2, basketType: 'HSS', department: 'HSS' },
   { courseCode: 'HS192', courseName: 'Introduction to Writing II', credits: 2, basketType: 'HSS', department: 'HSS' },
@@ -32,21 +16,18 @@ const COURSE_CATALOG = [
   { courseCode: 'PE101', courseName: 'Physical Education', credits: 0, basketType: 'Institute Core', department: 'Institute' },
   
   // Second Year
-  { courseCode: 'ES113', courseName: 'Data-Centric Computing', credits: 3, basketType: 'Institute Core', department: 'Institute' },
+  { courseCode: 'ES113', courseName: 'Data-Centric Computing', credits: 3, basketType: 'Institute Core', department: 'Institute', applicableBatches: ['2022-23', '2023-24', '2024-25'] },
   { courseCode: 'ES114', courseName: 'Probability, Statistics and Data Visualization', credits: 3, basketType: 'Institute Core', department: 'Institute' },
   { courseCode: 'ES116', courseName: 'Principles and Applications of Electrical Engineering', credits: 5, basketType: 'Institute Core', department: 'Institute' },
   { courseCode: 'ES117', courseName: 'The World of Engineering', credits: 2, basketType: 'Institute Core', department: 'Institute' },
   { courseCode: 'ES118', courseName: 'Materials for the Future', credits: 3, basketType: 'Materials Basket', department: 'MSE' },
-  { courseCode: 'ES119', courseName: 'Principles of Artificial Intelligence', credits: 4, basketType: 'Institute Core', department: 'Institute' },
   { courseCode: 'GE101', courseName: 'General Education I', credits: 2, basketType: 'General Education', department: 'Institute' },
   { courseCode: 'GE201', courseName: 'General Education II', credits: 2, basketType: 'General Education', department: 'Institute' },
   { courseCode: 'MA104', courseName: 'Ordinary Differential Equations', credits: 2, basketType: 'Mathematics Basket', department: 'Maths' },
   { courseCode: 'MA203', courseName: 'Numerical Methods', credits: 2, basketType: 'Institute Core', department: 'Maths' },
-  { courseCode: 'MA204', courseName: 'Introduction to Partial Differential Equations', credits: 2, basketType: 'Mathematics Basket', department: 'Maths' },
   { courseCode: 'MA205', courseName: 'Calculus of Several Variables', credits: 2, basketType: 'Mathematics Basket', department: 'Maths' },
   { courseCode: 'MA206', courseName: 'Introduction to Complex Analysis', credits: 2, basketType: 'Mathematics Basket', department: 'Maths' },
   { courseCode: 'ES211', courseName: 'Thermodynamics', credits: 3, basketType: 'Institute Core', department: 'Institute' },
-  { courseCode: 'ES212', courseName: 'Fluid Mechanics', credits: 4, basketType: 'Institute Core', department: 'Institute' },
   { courseCode: 'ES214', courseName: 'Discrete Mathematics', credits: 4, basketType: 'Institute Core', department: 'Institute' },
   { courseCode: 'ES221', courseName: 'Mechanics of Solids', credits: 4, basketType: 'Institute Core', department: 'Institute' },
   { courseCode: 'ES242', courseName: 'Data Structures and Algorithms I', credits: 4, basketType: 'Discipline Core', department: 'CSE' },
@@ -61,15 +42,11 @@ const COURSE_CATALOG = [
   { courseCode: 'HS151', courseName: 'Economics', credits: 4, basketType: 'HSS', department: 'HSS' },
   { courseCode: 'HS221', courseName: 'Introduction to Philosophy', credits: 4, basketType: 'HSS', department: 'HSS' },
   { courseCode: 'HS201', courseName: 'World Civilizations and Cultures', credits: 4, basketType: 'HSS', department: 'HSS' },
-  { courseCode: 'HS103', courseName: 'French Studies', credits: 4, basketType: 'HSS', department: 'HSS' },
-  { courseCode: 'HS152', courseName: 'Japanese Language for Beginners', credits: 4, basketType: 'HSS', department: 'HSS' },
   
   // Science Basket
   { courseCode: 'PH201', courseName: 'Introduction to Electrodynamics', credits: 4, basketType: 'Science Basket', department: 'Physics' },
   { courseCode: 'PH202', courseName: 'Introduction to Quantum Physics', credits: 4, basketType: 'Science Basket', department: 'Physics' },
   { courseCode: 'PH203', courseName: 'Solid State Physics', credits: 4, basketType: 'Science Basket', department: 'Physics' },
-  { courseCode: 'CH203', courseName: 'Fundamentals and Applications of Spectroscopy', credits: 4, basketType: 'Science Basket', department: 'Chemistry' },
-  { courseCode: 'CH302', courseName: 'Electrochemical Science and Engineering', credits: 4, basketType: 'Science Basket', department: 'Chemistry' },
   
   // CSE Courses
   { courseCode: 'CS201', courseName: 'Theory of Computing', credits: 4, basketType: 'Discipline Core', department: 'CSE' },
@@ -80,13 +57,8 @@ const COURSE_CATALOG = [
   { courseCode: 'CS330', courseName: 'Operating Systems', credits: 4, basketType: 'Discipline Core', department: 'CSE' },
   { courseCode: 'CS331', courseName: 'Computer Networks', credits: 4, basketType: 'Discipline Core', department: 'CSE' },
   { courseCode: 'CS432', courseName: 'Databases', credits: 4, basketType: 'Discipline Elective', department: 'CSE' },
-  { courseCode: 'CS431', courseName: 'Computer and Network Security', credits: 4, basketType: 'Discipline Elective', department: 'CSE' },
-  { courseCode: 'CS434', courseName: 'Software Engineering and Testing', credits: 4, basketType: 'Discipline Elective', department: 'CSE' },
-  { courseCode: 'CS435', courseName: 'Human-Computer Interaction', credits: 4, basketType: 'Discipline Elective', department: 'CSE' },
-  { courseCode: 'CS610', courseName: 'Algorithms', credits: 4, basketType: 'Discipline Elective', department: 'CSE' },
-  { courseCode: 'CS613', courseName: 'Natural Language Processing', credits: 4, basketType: 'Discipline Elective', department: 'CSE' },
   
-  // EE Courses
+  // EE Courses (Updated: EE 341 replaces EE 313 for 2025-26)
   { courseCode: 'EE221', courseName: 'Electronic Devices', credits: 3, basketType: 'Discipline Core', department: 'EE' },
   { courseCode: 'EE223', courseName: 'Electrical Machines', credits: 4, basketType: 'Discipline Core', department: 'EE' },
   { courseCode: 'EE224', courseName: 'Power Systems', credits: 4, basketType: 'Discipline Core', department: 'EE' },
@@ -95,11 +67,8 @@ const COURSE_CATALOG = [
   { courseCode: 'EE322', courseName: 'Analog and Mixed Signal Circuits', credits: 4, basketType: 'Discipline Core', department: 'EE' },
   { courseCode: 'EE323', courseName: 'Digital Signal Processing', credits: 4, basketType: 'Discipline Core', department: 'EE' },
   { courseCode: 'EE333', courseName: 'Power Electronics', credits: 4, basketType: 'Discipline Core', department: 'EE' },
-  { courseCode: 'EE341', courseName: 'Communication Systems', credits: 4, basketType: 'Discipline Core', department: 'EE' },
-  { courseCode: 'EE426', courseName: 'Electric Vehicle Technology', credits: 4, basketType: 'Discipline Elective', department: 'EE' },
-  { courseCode: 'EE617', courseName: 'VLSI Design', credits: 4, basketType: 'Discipline Elective', department: 'EE' },
-  { courseCode: 'EE651', courseName: 'CMOS Analog IC Design', credits: 4, basketType: 'Discipline Elective', department: 'EE' },
-  { courseCode: 'EE659', courseName: 'Smart Grid', credits: 4, basketType: 'Discipline Elective', department: 'EE' },
+  { courseCode: 'EE313', courseName: 'Communication Systems', credits: 3, basketType: 'Discipline Core', department: 'EE', applicableBatches: ['2022-23', '2023-24', '2024-25'] },
+  { courseCode: 'EE341', courseName: 'Communication Systems', credits: 4, basketType: 'Discipline Core', department: 'EE', applicableBatches: ['2025-26', '2026-27', '2027-28'] },
   
   // ME Courses
   { courseCode: 'ME206', courseName: 'Statics and Dynamics', credits: 4, basketType: 'Discipline Core', department: 'ME' },
@@ -111,8 +80,6 @@ const COURSE_CATALOG = [
   { courseCode: 'ME335', courseName: 'Synthesis and Analysis of Mechanisms', credits: 3, basketType: 'Discipline Core', department: 'ME' },
   { courseCode: 'ME337', courseName: 'Mechanical Systems Design', credits: 3, basketType: 'Discipline Core', department: 'ME' },
   { courseCode: 'ME362', courseName: 'Introduction to Manufacturing Systems and Metrology', credits: 3, basketType: 'Discipline Core', department: 'ME' },
-  { courseCode: 'ME605', courseName: 'Computational Fluid Dynamics', credits: 4, basketType: 'Discipline Elective', department: 'ME' },
-  { courseCode: 'ME639', courseName: 'Introduction to Robotics', credits: 5, basketType: 'Discipline Elective', department: 'ME' },
   
   // ChemE Courses
   { courseCode: 'CL201', courseName: 'Chemical Process Calculations', credits: 3, basketType: 'Discipline Core', department: 'ChemE' },
@@ -125,7 +92,6 @@ const COURSE_CATALOG = [
   { courseCode: 'CL315', courseName: 'Process Dynamics and Control', credits: 3, basketType: 'Discipline Core', department: 'ChemE' },
   { courseCode: 'CL316', courseName: 'Separation Processes II', credits: 3, basketType: 'Discipline Core', department: 'ChemE' },
   { courseCode: 'CL317', courseName: 'Process Synthesis, Design and Simulation', credits: 4, basketType: 'Discipline Core', department: 'ChemE' },
-  { courseCode: 'CL325', courseName: 'Transport Phenomena', credits: 3, basketType: 'Discipline Core', department: 'ChemE' },
   
   // Civil Courses
   { courseCode: 'CE201', courseName: 'Earth Materials and Processes', credits: 2, basketType: 'Discipline Core', department: 'Civil' },
@@ -136,8 +102,6 @@ const COURSE_CATALOG = [
   { courseCode: 'CE310', courseName: 'Hydrology and Hydraulics', credits: 4, basketType: 'Discipline Core', department: 'Civil' },
   { courseCode: 'CE311', courseName: 'Design of Reinforced Concrete Structures', credits: 5, basketType: 'Discipline Core', department: 'Civil' },
   { courseCode: 'CE312', courseName: 'Design of Steel Structures', credits: 4, basketType: 'Discipline Core', department: 'Civil' },
-  { courseCode: 'CE313', courseName: 'Environmental Science and Engineering', credits: 4, basketType: 'Discipline Core', department: 'Civil' },
-  { courseCode: 'CE314', courseName: 'Geotechnical Engineering', credits: 4, basketType: 'Discipline Core', department: 'Civil' },
   { courseCode: 'CE403', courseName: 'Construction Technology and Management', credits: 4, basketType: 'Discipline Core', department: 'Civil' },
   { courseCode: 'CE404', courseName: 'Transportation Engineering', credits: 4, basketType: 'Discipline Core', department: 'Civil' },
   
@@ -155,11 +119,35 @@ const COURSE_CATALOG = [
   { courseCode: 'MSE314', courseName: 'Materials Selection and Design', credits: 3, basketType: 'Materials Basket', department: 'MSE' },
 ];
 
-export default function CourseSearchInput({ value, onChange, onSelect, placeholder = "Search course...", className = "" }) {
+// Helper function to get applicable courses based on admission year
+export const getApplicableCourses = (admissionYear) => {
+  if (!admissionYear) return COURSE_CATALOG;
+  
+  const yearRange = `${admissionYear}-${String(Number(admissionYear) + 1).slice(-2)}`;
+  
+  return COURSE_CATALOG.filter(course => {
+    // If no batch restriction, show for all
+    if (!course.applicableBatches) return true;
+    // Check if course is applicable for this batch
+    return course.applicableBatches.includes(yearRange);
+  });
+};
+
+export default function CourseSearchInput({ 
+  value, 
+  onChange, 
+  onSelect, 
+  placeholder = "Search course...", 
+  className = "",
+  admissionYear = null // Pass admission year from parent
+}) {
   const [suggestions, setSuggestions] = useState([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
   const inputRef = useRef(null);
   const suggestionsRef = useRef(null);
+
+  // Get applicable courses based on admission year
+  const applicableCourses = getApplicableCourses(admissionYear);
 
   useEffect(() => {
     if (value.length < 2) {
@@ -169,32 +157,15 @@ export default function CourseSearchInput({ value, onChange, onSelect, placehold
     }
     
     const searchTerm = value.toLowerCase();
-    const filtered = COURSE_CATALOG.filter(course => 
+    const filtered = applicableCourses.filter(course => 
       course.courseCode.toLowerCase().includes(searchTerm) ||
       course.courseName.toLowerCase().includes(searchTerm)
     ).slice(0, 8);
     
     setSuggestions(filtered);
     setShowSuggestions(filtered.length > 0);
-  }, [value]);
-  
-  // frontend/src/components/CourseSearchInput.jsx
-// Add this logic inside your component
+  }, [value, applicableCourses]);
 
-  const getApplicableCourses = (userAdmissionYear) => {
-  const yearRange = `${userAdmissionYear}-${String(Number(userAdmissionYear) + 1).slice(-2)}`;
-  
-  return COURSE_CATALOG.filter(course => {
-    // If no batch restriction, show for all
-      if (!course.applicableBatches) return true;
-    // Check if course is applicable for this batch
-      return course.applicableBatches.includes(yearRange);
-    });
-  };
-
-// Then in your component, use this filtered list:
-  const userAdmissionYear = // get from user context or props
-  const applicableCourses = getApplicableCourses(userAdmissionYear);
   const handleSelect = (course) => {
     onChange(course.courseCode);
     if (onSelect) {
