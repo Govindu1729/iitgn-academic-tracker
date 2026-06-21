@@ -1,5 +1,23 @@
 import { useState, useEffect, useRef } from 'react';
 
+// frontend/src/components/CourseSearchInput.jsx
+// Add this logic inside your component
+
+const getApplicableCourses = (userAdmissionYear) => {
+  const yearRange = `${userAdmissionYear}-${String(Number(userAdmissionYear) + 1).slice(-2)}`;
+  
+  return COURSE_CATALOG.filter(course => {
+    // If no batch restriction, show for all
+    if (!course.applicableBatches) return true;
+    // Check if course is applicable for this batch
+    return course.applicableBatches.includes(yearRange);
+  });
+};
+
+// Then in your component, use this filtered list:
+const userAdmissionYear = // get from user context or props
+const applicableCourses = getApplicableCourses(userAdmissionYear);
+
 // Full course catalog
 const COURSE_CATALOG = [
   // First Year Institute Core
@@ -159,7 +177,24 @@ export default function CourseSearchInput({ value, onChange, onSelect, placehold
     setSuggestions(filtered);
     setShowSuggestions(filtered.length > 0);
   }, [value]);
+  
+  // frontend/src/components/CourseSearchInput.jsx
+// Add this logic inside your component
 
+  const getApplicableCourses = (userAdmissionYear) => {
+  const yearRange = `${userAdmissionYear}-${String(Number(userAdmissionYear) + 1).slice(-2)}`;
+  
+  return COURSE_CATALOG.filter(course => {
+    // If no batch restriction, show for all
+      if (!course.applicableBatches) return true;
+    // Check if course is applicable for this batch
+      return course.applicableBatches.includes(yearRange);
+    });
+  };
+
+// Then in your component, use this filtered list:
+  const userAdmissionYear = // get from user context or props
+  const applicableCourses = getApplicableCourses(userAdmissionYear);
   const handleSelect = (course) => {
     onChange(course.courseCode);
     if (onSelect) {

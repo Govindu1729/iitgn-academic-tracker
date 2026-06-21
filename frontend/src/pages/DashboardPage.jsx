@@ -40,7 +40,27 @@ export default function DashboardPage() {
   const totalCredits = calculateTotalCredits(completedCourses);
   const basketCredits = getCreditsByBasket(completedCourses);
   const cpi = calculateCPI(completedCourses);
+  // frontend/src/pages/DashboardPage.jsx
+// Add batch-specific logic
 
+  const getBatchSpecificRequirements = (program, admissionYear) => {
+  // For EE students admitted from 2025-26
+    if (program === 'BTech_EE' && admissionYear >= 2025) {
+      return {
+        totalCredits: 172,
+        note: 'EE 341 (4 credits) replaces EE 313 (3 credits)'
+      };
+   }
+  
+  // For all students from 2025-26
+    if (admissionYear >= 2025) {
+      return {
+       note: 'ES 119 (Principles of AI) replaces ES 113 (Data Centric Computing)'
+     };
+   }
+  
+   return {};
+  };
   const getSemesterCreditsData = () => {
     const semesterCredits = {};
     completedCourses.forEach(course => {
