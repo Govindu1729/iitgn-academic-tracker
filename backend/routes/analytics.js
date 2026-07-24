@@ -4,6 +4,7 @@ import { authenticate } from '../middleware/auth.js';
 import Course from '../models/Course.js';
 import User from '../models/User.js';
 import programRequirementsData from '../data/programRequirements.js';
+import normalizeBasketName from '../utils/basketMapper.js';
 import logger from '../utils/logger.js';
 
 const router = express.Router();
@@ -77,7 +78,7 @@ router.get('/basket-summary', authenticate, async (req, res) => {
     const basketCourses = {};
     // Normalize basket keys and ensure numeric credits
     courses.forEach(course => {
-      const key = (course.basketType || 'Other').trim();
+      const key = normalizeBasketName(course.basketType);
       const credits = Number(course.credits) || 0;
       if (!basketCredits[key]) {
         basketCredits[key] = 0;
@@ -121,7 +122,7 @@ router.get('/credits-status', authenticate, async (req, res) => {
     // Sum completed credits per basket; exclude failed courses
     const completedByBasket = {};
     completedCourses.forEach(c => {
-      const key = (c.basketType || 'Other').trim();
+      const key = normalizeBasketName(c.basketType);
       const credits = Number(c.credits) || 0;
       const failed = (c.grade === 'F' || c.grade === 'NP');
       if (!completedByBasket[key]) completedByBasket[key] = 0;
