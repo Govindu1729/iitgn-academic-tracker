@@ -5,13 +5,29 @@ const api = axios.create({
   baseURL: '/api'
 });
 
-api.interceptors.request.use((config) => {
-  const token = localStorage.getItem('token');
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
+// Attach token from localStorage for each request
+// Note: Authorization header is set by AuthContext when access token is available.
+
+// Global response handler: on 401, clear local auth and reload to force login
+api.interceptors.response.use(
+  (res) => res,
+  (error) => {
+    if (error.response && error.response.status === 401) {
+      try {
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+        delete api.defaults.headers.common['Authorization'];
+      } catch (e) {
+        // ignore
+      }
+      // Reloading is a simple way to reset app state and redirect to login
+      if (typeof window !== 'undefined') {
+        window.location.href = '/';
+      }
+    }
+    return Promise.reject(error);
   }
-  return config;
-});
+);
 
 export const courseAPI = {
   getAll: () => api.get('/courses'),

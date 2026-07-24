@@ -1,5 +1,6 @@
 // backend/routes/courses.js
 import express from 'express';
+import { body, validationResult } from 'express-validator';
 import { authenticate } from '../middleware/auth.js';
 import Course from '../models/Course.js';
 
@@ -37,6 +38,10 @@ router.get('/by-semester', authenticate, async (req, res) => {
 router.post('/', authenticate, async (req, res) => {
   try {
     const { courseCode, courseName, credits, grade, semester, academicYear, basketType, department, isPlanned, isPassFail, isHonoursCourse, isMinorCourse, semesterOrder } = req.body;
+    // Basic validation
+    if (!courseCode || !courseName || !credits) {
+      return res.status(400).json({ message: 'courseCode, courseName and credits are required' });
+    }
     
     const course = new Course({
       userId: req.userId,
@@ -58,7 +63,7 @@ router.post('/', authenticate, async (req, res) => {
     await course.save();
     res.status(201).json(course);
   } catch (error) {
-    console.error(error);
+    console.error('Add course error:', error);
     res.status(500).json({ message: 'Server error' });
   }
 });
@@ -90,7 +95,7 @@ router.put('/:id', authenticate, async (req, res) => {
     await course.save();
     res.json(course);
   } catch (error) {
-    console.error(error);
+    console.error('Update course error:', error);
     res.status(500).json({ message: 'Server error' });
   }
 });
@@ -99,20 +104,11 @@ router.put('/:id', authenticate, async (req, res) => {
 // backend/routes/courses.js - Make sure this exists
 router.delete('/:id', authenticate, async (req, res) => {
   try {
-    console.log('Delete request for ID:', req.params.id); // Debug log
-    console.log('User ID:', req.userId);
-    
-    const course = await Course.findOneAndDelete({ 
-      _id: req.params.id, 
-      userId: req.userId 
-    });
+    const course = await Course.findOneAndDelete({ _id: req.params.id, userId: req.userId });
     
     if (!course) {
-      console.log('Course not found');
       return res.status(404).json({ message: 'Course not found' });
     }
-    
-    console.log('Course deleted:', course.courseCode);
     res.json({ message: 'Course deleted' });
   } catch (error) {
     console.error('Delete error:', error);

@@ -1,6 +1,7 @@
 // frontend/src/context/AuthContext.jsx
 import { createContext, useState, useContext, useEffect } from 'react';
 import axios from 'axios';
+import api from '../services/api';
 import toast from 'react-hot-toast';
 
 const AuthContext = createContext();
@@ -15,7 +16,7 @@ export const AuthProvider = ({ children }) => {
     const token = localStorage.getItem('token');
     const userData = localStorage.getItem('user');
     if (token && userData) {
-      axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+      api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
       setUser(JSON.parse(userData));
     }
     setLoading(false);
@@ -23,11 +24,11 @@ export const AuthProvider = ({ children }) => {
 
   const login = async (email, password) => {
     try {
-      const res = await axios.post('/api/auth/login', { email, password });
+      const res = await api.post('/auth/login', { email, password });
       const { token, user } = res.data;
       localStorage.setItem('token', token);
       localStorage.setItem('user', JSON.stringify(user));
-      axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+      api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
       setUser(user);
       toast.success('Logged in successfully!');
       return true;
@@ -39,7 +40,7 @@ export const AuthProvider = ({ children }) => {
 
   const signup = async (email, password, program, admissionYear) => {
     try {
-      const res = await axios.post('/api/auth/signup', { 
+      const res = await api.post('/auth/signup', { 
         email, 
         password, 
         program: program || 'BTech_CSE',
@@ -48,7 +49,7 @@ export const AuthProvider = ({ children }) => {
       const { token, user } = res.data;
       localStorage.setItem('token', token);
       localStorage.setItem('user', JSON.stringify(user));
-      axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+      api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
       setUser(user);
       toast.success('Account created successfully!');
       return true;
@@ -60,7 +61,7 @@ export const AuthProvider = ({ children }) => {
 
   const updateProfile = async (updates) => {
     try {
-      const res = await axios.put('/api/auth/profile', updates);
+      const res = await api.put('/auth/profile', updates);
       const updatedUser = res.data.user;
       localStorage.setItem('user', JSON.stringify(updatedUser));
       setUser(updatedUser);
@@ -75,7 +76,7 @@ export const AuthProvider = ({ children }) => {
   const logout = () => {
     localStorage.removeItem('token');
     localStorage.removeItem('user');
-    delete axios.defaults.headers.common['Authorization'];
+    delete api.defaults.headers.common['Authorization'];
     setUser(null);
     toast.success('Logged out');
   };

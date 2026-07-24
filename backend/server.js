@@ -2,6 +2,9 @@ import express from 'express';
 import mongoose from 'mongoose';
 import cors from 'cors';
 import dotenv from 'dotenv';
+import helmet from 'helmet';
+import rateLimit from 'express-rate-limit';
+import cookieParser from 'cookie-parser';
 import authRoutes from './routes/auth.js';
 import courseRoutes from './routes/courses.js';
 import programRoutes from './routes/programs.js';
@@ -11,6 +14,17 @@ dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 5000;
+
+// Fail fast if critical env vars are missing
+if (!process.env.JWT_SECRET) {
+  console.error('FATAL: JWT_SECRET is not set. Set it in your environment and restart.');
+  process.exit(1);
+}
+
+if (!process.env.MONGODB_URI) {
+  console.error('FATAL: MONGODB_URI is not set. Set it in your environment and restart.');
+  process.exit(1);
+}
 
 // ✅ FIXED CORS Configuration
 const allowedOrigins = [
@@ -39,11 +53,34 @@ app.use(cors({
 // Handle preflight requests
 app.options('*', cors());
 
+// Security headers
+app.use(helmet());
+
+// Parse cookies for future refresh-token support
+app.use(cookieParser());
+
+// Global rate limiter (conservative)
+const globalLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 200, // limit each IP to 200 requests per windowMs
+  standardHeaders: true,
+  legacyHeaders: false
+});
+app.use(globalLimiter);
+
 // Middleware
 app.use(express.json());
 
 // Routes
-app.use('/api/auth', authRoutes);
+// Stricter limiter for auth endpoints
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 10, // limit each IP to 10 requests per windowMs
+  standardHeaders: true,
+  legacyHeaders: false
+});
+
+app.use('/api/auth', authLimiter, authRoutes);
 app.use('/api/courses', courseRoutes);
 app.use('/api/programs', programRoutes);
 app.use('/api/analytics', analyticsRoutes);
@@ -54,9 +91,16 @@ app.get('/api/health', (req, res) => {
 });
 
 // MongoDB Connection
-mongoose.connect(process.env.MONGODB_URI)
+mongoose.connect(process.env.MONGODB_URI, {
+  // explicit options for compatibility
+  useNewUrlParser: true,
+  useUnifiedTopology: true
+})
   .then(() => {
     console.log('Connected to MongoDB');
     app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
   })
-  .catch(err => console.error('MongoDB connection error:', err));
+  .catch(err => {
+    console.error('MongoDB connection error:', err);
+    process.exit(1);
+  });
