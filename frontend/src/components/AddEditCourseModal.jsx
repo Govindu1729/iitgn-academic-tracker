@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import CourseSearchInput from './CourseSearchInput';
 import toast from 'react-hot-toast';
 
@@ -12,6 +12,9 @@ export default function AddEditCourseModal({ isOpen, onClose, onSubmit, course =
     courseCode: '', courseName: '', credits: 3, grade: '', semester: 'I',
     academicYear: '2026-27', basketType: 'Discipline Core', department: 'Other', isPlanned: false
   });
+
+  const modalRef = useRef(null);
+  const firstFieldRef = useRef(null);
 
   useEffect(() => {
     if (course) {
@@ -28,6 +31,27 @@ export default function AddEditCourseModal({ isOpen, onClose, onSubmit, course =
     }
   }, [course, isOpen]);
 
+  // Focus management and keyboard handling for accessibility
+  useEffect(() => {
+    if (!isOpen) return;
+    const prev = document.activeElement;
+    // focus the first input when modal opens
+    requestAnimationFrame(() => {
+      firstFieldRef.current?.focus();
+    });
+
+    const onKey = (e) => {
+      if (e.key === 'Escape') {
+        onClose();
+      }
+    };
+    document.addEventListener('keydown', onKey);
+    return () => {
+      document.removeEventListener('keydown', onKey);
+      try { prev?.focus(); } catch (e) {}
+    };
+  }, [isOpen, onClose]);
+
   const handleSubmit = (e) => {
     e.preventDefault();
     if (!formData.courseCode || !formData.courseName) {
@@ -41,16 +65,22 @@ export default function AddEditCourseModal({ isOpen, onClose, onSubmit, course =
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-lg w-full max-w-md max-h-[90vh] overflow-y-auto">
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
+      role="dialog" aria-modal="true" aria-labelledby="add-course-title">
+      <div ref={modalRef} className="bg-white rounded-lg w-full max-w-md max-h-[90vh] overflow-y-auto">
         <div className="sticky top-0 bg-white border-b px-4 md:px-6 py-3 md:py-4">
-          <h2 className="text-lg md:text-xl font-bold">{course ? 'Edit Course' : 'Add Course'}</h2>
+          <div className="flex items-center justify-between">
+            <h2 id="add-course-title" className="text-lg md:text-xl font-bold">{course ? 'Edit Course' : 'Add Course'}</h2>
+            <button aria-label="Close dialog" onClick={onClose} className="ml-3 text-gray-500 hover:text-gray-700">✕</button>
+          </div>
         </div>
         
         <form onSubmit={handleSubmit} className="p-4 md:p-6 space-y-3 md:space-y-4">
           <div>
-            <label className="block text-sm font-medium mb-1">Course Code *</label>
+            <label htmlFor="course-code-input" className="block text-sm font-medium mb-1">Course Code *</label>
             <CourseSearchInput
+              inputId="course-code-input"
+              refInput={firstFieldRef}
               value={formData.courseCode}
               onChange={(value) => setFormData({ ...formData, courseCode: value.toUpperCase() })}
               onSelect={(course) => setFormData({
@@ -62,15 +92,15 @@ export default function AddEditCourseModal({ isOpen, onClose, onSubmit, course =
           </div>
           
           <div>
-            <label className="block text-sm font-medium mb-1">Course Name</label>
-            <input type="text" value={formData.courseName} onChange={(e) => setFormData({ ...formData, courseName: e.target.value })}
+            <label htmlFor="course-name-input" className="block text-sm font-medium mb-1">Course Name</label>
+            <input id="course-name-input" type="text" value={formData.courseName} onChange={(e) => setFormData({ ...formData, courseName: e.target.value })}
               className="w-full px-3 py-2 border rounded-lg text-sm" required />
           </div>
           
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-sm font-medium mb-1">Credits</label>
-              <input type="number" step="0.5" min="0.5" max="6" value={formData.credits}
+              <label htmlFor="credits-input" className="block text-sm font-medium mb-1">Credits</label>
+              <input id="credits-input" type="number" step="0.5" min="0.5" max="6" value={formData.credits}
                 onChange={(e) => setFormData({ ...formData, credits: parseFloat(e.target.value) })}
                 className="w-full px-3 py-2 border rounded-lg text-sm" required />
             </div>
@@ -90,15 +120,15 @@ export default function AddEditCourseModal({ isOpen, onClose, onSubmit, course =
           
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-sm font-medium mb-1">Semester</label>
+              <label htmlFor="semester-select" className="block text-sm font-medium mb-1">Semester</label>
               <select value={formData.semester} onChange={(e) => setFormData({ ...formData, semester: e.target.value })}
-                className="w-full px-3 py-2 border rounded-lg text-sm">
+                id="semester-select" className="w-full px-3 py-2 border rounded-lg text-sm">
                 <option value="I">I</option><option value="II">II</option><option value="Summer">Summer</option>
               </select>
             </div>
             <div>
-              <label className="block text-sm font-medium mb-1">Academic Year</label>
-              <select value={formData.academicYear} onChange={(e) => setFormData({ ...formData, academicYear: e.target.value })}
+              <label htmlFor="academic-year-select" className="block text-sm font-medium mb-1">Academic Year</label>
+              <select id="academic-year-select" value={formData.academicYear} onChange={(e) => setFormData({ ...formData, academicYear: e.target.value })}
                 className="w-full px-3 py-2 border rounded-lg text-sm">
                 <option>2024-25</option><option>2025-26</option><option>2026-27</option>
                 <option>2027-28</option><option>2028-29</option>
@@ -107,8 +137,8 @@ export default function AddEditCourseModal({ isOpen, onClose, onSubmit, course =
           </div>
           
           <div>
-            <label className="block text-sm font-medium mb-1">Basket</label>
-            <select value={formData.basketType} onChange={(e) => setFormData({ ...formData, basketType: e.target.value })}
+            <label htmlFor="basket-select" className="block text-sm font-medium mb-1">Basket</label>
+            <select id="basket-select" value={formData.basketType} onChange={(e) => setFormData({ ...formData, basketType: e.target.value })}
               className="w-full px-3 py-2 border rounded-lg text-sm">
               {basketOptions.map(opt => <option key={opt}>{opt}</option>)}
             </select>

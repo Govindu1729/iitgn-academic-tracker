@@ -1,5 +1,6 @@
 import express from 'express';
 import { authenticate } from '../middleware/auth.js';
+import logger from '../utils/logger.js';
 
 const router = express.Router();
 
@@ -216,7 +217,7 @@ router.get('/requirements/:programCode', authenticate, async (req, res) => {
     
     res.json(requirements);
   } catch (error) {
-    console.error(error);
+    logger.error(error);
     res.status(500).json({ message: 'Server error' });
   }
 });
@@ -230,7 +231,7 @@ router.get('/list', authenticate, async (req, res) => {
     }));
     res.json(programs);
   } catch (error) {
-    console.error(error);
+    logger.error(error);
     res.status(500).json({ message: 'Server error' });
   }
 });

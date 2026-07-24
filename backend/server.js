@@ -2,6 +2,7 @@ import express from 'express';
 import mongoose from 'mongoose';
 import cors from 'cors';
 import dotenv from 'dotenv';
+import logger from './utils/logger.js';
 import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
 import cookieParser from 'cookie-parser';
@@ -17,12 +18,12 @@ const PORT = process.env.PORT || 5000;
 
 // Fail fast if critical env vars are missing
 if (!process.env.JWT_SECRET) {
-  console.error('FATAL: JWT_SECRET is not set. Set it in your environment and restart.');
+  logger.error('FATAL: JWT_SECRET is not set. Set it in your environment and restart.');
   process.exit(1);
 }
 
 if (!process.env.MONGODB_URI) {
-  console.error('FATAL: MONGODB_URI is not set. Set it in your environment and restart.');
+  logger.error('FATAL: MONGODB_URI is not set. Set it in your environment and restart.');
   process.exit(1);
 }
 
@@ -41,7 +42,7 @@ app.use(cors({
     if (allowedOrigins.indexOf(origin) !== -1) {
       callback(null, true);
     } else {
-      console.log('Blocked origin:', origin);
+      logger.warn('Blocked origin: %s', origin);
       callback(new Error('Not allowed by CORS'));
     }
   },
@@ -97,10 +98,10 @@ mongoose.connect(process.env.MONGODB_URI, {
   useUnifiedTopology: true
 })
   .then(() => {
-    console.log('Connected to MongoDB');
-    app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+    logger.info('Connected to MongoDB');
+    app.listen(PORT, () => logger.info('Server running on port %s', PORT));
   })
   .catch(err => {
-    console.error('MongoDB connection error:', err);
+    logger.error('MongoDB connection error: %o', err);
     process.exit(1);
   });

@@ -2,6 +2,7 @@
 import express from 'express';
 import { authenticate } from '../middleware/auth.js';
 import Course from '../models/Course.js';
+import logger from '../utils/logger.js';
 
 const router = express.Router();
 
@@ -57,7 +58,7 @@ router.get('/gpa', authenticate, async (req, res) => {
       totalCourses: courses.length
     });
   } catch (error) {
-    console.error(error);
+    logger.error(error);
     res.status(500).json({ message: 'Server error' });
   }
 });
@@ -93,7 +94,7 @@ router.get('/basket-summary', authenticate, async (req, res) => {
       totalCompletedCredits: courses.reduce((sum, c) => sum + c.credits, 0)
     });
   } catch (error) {
-    console.error(error);
+    logger.error(error);
     res.status(500).json({ message: 'Server error' });
   }
 });
@@ -129,7 +130,7 @@ router.get('/progress-analysis', authenticate, async (req, res) => {
       plannedBySemester
     });
   } catch (error) {
-    console.error(error);
+    logger.error(error);
     res.status(500).json({ message: 'Server error' });
   }
 });

@@ -3,6 +3,7 @@ import express from 'express';
 import { body, validationResult } from 'express-validator';
 import { authenticate } from '../middleware/auth.js';
 import Course from '../models/Course.js';
+import logger from '../utils/logger.js';
 
 const router = express.Router();
 
@@ -12,7 +13,7 @@ router.get('/', authenticate, async (req, res) => {
     const courses = await Course.find({ userId: req.userId }).sort({ academicYear: -1, semesterOrder: 1, createdAt: -1 });
     res.json(courses);
   } catch (error) {
-    console.error(error);
+    logger.error(error);
     res.status(500).json({ message: 'Server error' });
   }
 });
@@ -29,7 +30,7 @@ router.get('/by-semester', authenticate, async (req, res) => {
     }, {});
     res.json(grouped);
   } catch (error) {
-    console.error(error);
+    logger.error(error);
     res.status(500).json({ message: 'Server error' });
   }
 });
@@ -63,7 +64,7 @@ router.post('/', authenticate, async (req, res) => {
     await course.save();
     res.status(201).json(course);
   } catch (error) {
-    console.error('Add course error:', error);
+    logger.error('Add course error: %o', error);
     res.status(500).json({ message: 'Server error' });
   }
 });
@@ -95,7 +96,7 @@ router.put('/:id', authenticate, async (req, res) => {
     await course.save();
     res.json(course);
   } catch (error) {
-    console.error('Update course error:', error);
+    logger.error('Update course error: %o', error);
     res.status(500).json({ message: 'Server error' });
   }
 });
@@ -111,7 +112,7 @@ router.delete('/:id', authenticate, async (req, res) => {
     }
     res.json({ message: 'Course deleted' });
   } catch (error) {
-    console.error('Delete error:', error);
+    logger.error('Delete error: %o', error);
     res.status(500).json({ message: 'Server error' });
   }
 });

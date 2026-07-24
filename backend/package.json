@@ -18,6 +18,8 @@
     "helmet": "^7.0.0",
     "express-rate-limit": "^6.7.0",
     "cookie-parser": "^1.4.7"
+    ,
+    "winston": "^3.9.0"
   },
   "devDependencies": {
     "nodemon": "^3.0.1"

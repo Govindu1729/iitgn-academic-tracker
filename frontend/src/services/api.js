@@ -5,6 +5,9 @@ const api = axios.create({
   baseURL: '/api'
 });
 
+// Send cookies (refresh token) with requests
+api.defaults.withCredentials = true;
+
 // Attach token from localStorage for each request
 // Note: Authorization header is set by AuthContext when access token is available.
 

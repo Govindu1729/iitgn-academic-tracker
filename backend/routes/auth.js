@@ -4,6 +4,7 @@ import jwt from 'jsonwebtoken';
 import { body, validationResult } from 'express-validator';
 import User from '../models/User.js';
 import { authenticate } from '../middleware/auth.js';
+import logger from '../utils/logger.js';
 
 const router = express.Router();
 
@@ -75,7 +76,7 @@ router.post('/signup', [
       } 
     });
   } catch (error) {
-    console.error(error);
+    logger.error(error);
     res.status(500).json({ message: 'Server error' });
   }
 });
@@ -123,7 +124,7 @@ router.post('/login', [
       } 
     });
   } catch (error) {
-    console.error('Login error:', error);
+    logger.error('Login error: %o', error);
     res.status(500).json({ message: 'Server error' });
   }
 });
@@ -168,7 +169,7 @@ router.post('/refresh', async (req, res) => {
       minorDiscipline: user.minorDiscipline
     }});
   } catch (error) {
-    console.error('Refresh error:', error);
+    logger.error('Refresh error: %o', error);
     res.status(500).json({ message: 'Server error' });
   }
 });
@@ -192,7 +193,7 @@ router.post('/logout', async (req, res) => {
     res.clearCookie(REFRESH_COOKIE_NAME, refreshCookieOptions);
     res.json({ message: 'Logged out' });
   } catch (error) {
-    console.error('Logout error:', error);
+    logger.error('Logout error: %o', error);
     res.status(500).json({ message: 'Server error' });
   }
 });
@@ -226,7 +227,7 @@ router.put('/profile', authenticate, async (req, res) => {
       } 
     });
   } catch (error) {
-    console.error(error);
+    logger.error(error);
     res.status(500).json({ message: 'Server error' });
   }
 });
