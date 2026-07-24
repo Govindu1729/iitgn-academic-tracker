@@ -54,7 +54,7 @@ router.post('/', authenticate, async (req, res) => {
       grade: grade || '',
       semester,
       academicYear,
-      basketType,
+      basketType: normalizeBasketName(basketType),
       department: department || 'Other',
       isPlanned: isPlanned || false,
       isPassFail: isPassFail || false,
@@ -87,7 +87,7 @@ router.put('/:id', authenticate, async (req, res) => {
     if (grade !== undefined) course.grade = grade;
     if (semester !== undefined) course.semester = semester;
     if (academicYear !== undefined) course.academicYear = academicYear;
-    if (basketType !== undefined) course.basketType = basketType;
+    if (basketType !== undefined) course.basketType = normalizeBasketName(basketType);
     if (department !== undefined) course.department = department;
     if (isPlanned !== undefined) course.isPlanned = isPlanned;
     if (isPassFail !== undefined) course.isPassFail = isPassFail;

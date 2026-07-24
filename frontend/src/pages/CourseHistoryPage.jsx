@@ -4,6 +4,7 @@ import AddEditCourseModal from '../components/AddEditCourseModal';
 import BulkImportModal from '../components/BulkImportModal';
 import { calculateCPI, calculateTotalCredits } from '../utils/gpaCalculator';
 import { exportToExcel, exportGPAReport } from '../utils/exportExcel';
+import normalizeBasketName from '../utils/basketMapper';
 import toast from 'react-hot-toast';
 
 export default function CourseHistoryPage() {
@@ -89,7 +90,7 @@ export default function CourseHistoryPage() {
           grade: course.grade || '',
           semester: semester || course.semester || 'I',
           academicYear: academicYear || course.academicYear || '2026-27',
-          basketType: course.basketType || 'Discipline Core',
+          basketType: normalizeBasketName(course.basketType || 'Discipline Core'),
           department: course.department || 'Other',
           isPlanned: false
         });
