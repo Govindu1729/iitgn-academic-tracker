@@ -24,6 +24,13 @@
     "exceljs": "^4.3.0"
   },
   "devDependencies": {
-    "nodemon": "^3.0.1"
+    "nodemon": "^3.0.1",
+    "mocha": "^10.2.0",
+    "supertest": "^6.4.2",
+    "mongodb-memory-server": "^8.12.1"
+  }
+  ,
+  "scripts": {
+    "test": "mocha --exit --recursive \"test/**/*.test.js\""
   }
 }

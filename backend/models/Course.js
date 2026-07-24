@@ -37,7 +37,7 @@ const courseSchema = new mongoose.Schema({
   basketType: {
     type: String,
     required: true,
-    enum: ['Institute Core', 'HSS', 'Science Basket', 'Mathematics Basket', 'Materials Basket', 'General Education', 'Discipline Core', 'Discipline Elective', 'Open Elective', 'Project', 'External Exposure', 'Honours', 'Minor']
+    enum: ['Institute Core', 'HSS', 'Science Basket', 'Mathematics Basket', 'Materials Basket', 'General Education', 'Discipline Core', 'Discipline Elective', 'Open Elective', 'Project', 'External Exposure', 'Honours', 'Minor', 'Other']
   },
   department: {
     type: String,
