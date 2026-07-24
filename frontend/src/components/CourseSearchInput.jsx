@@ -139,12 +139,15 @@ export default function CourseSearchInput({
   onSelect, 
   placeholder = "Search course...", 
   className = "",
-  admissionYear = null // Pass admission year from parent
+  admissionYear = null, // Pass admission year from parent
+  inputId = undefined,
+  refInput = undefined
 }) {
   const [suggestions, setSuggestions] = useState([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
   const inputRef = useRef(null);
   const suggestionsRef = useRef(null);
+  const [highlighted, setHighlighted] = useState(-1);
 
   // Get applicable courses based on admission year
   const applicableCourses = getApplicableCourses(admissionYear);
@@ -172,6 +175,28 @@ export default function CourseSearchInput({
       onSelect(course);
     }
     setShowSuggestions(false);
+    setHighlighted(-1);
+    // return focus to input after selecting
+    inputRef.current?.focus();
+  };
+
+  const handleKeyDown = (e) => {
+    if (!showSuggestions) return;
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      setHighlighted((h) => Math.min(h + 1, suggestions.length - 1));
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      setHighlighted((h) => Math.max(h - 1, 0));
+    } else if (e.key === 'Enter') {
+      if (highlighted >= 0 && suggestions[highlighted]) {
+        handleSelect(suggestions[highlighted]);
+        e.preventDefault();
+      }
+    } else if (e.key === 'Escape') {
+      setShowSuggestions(false);
+      setHighlighted(-1);
+    }
   };
 
   useEffect(() => {
@@ -188,9 +213,19 @@ export default function CourseSearchInput({
   return (
     <div className="relative flex-1">
       <input
-        ref={inputRef}
+        id={inputId}
+        ref={(el) => {
+          inputRef.current = el;
+          if (refInput) refInput.current = el;
+        }}
         type="text"
+        role="combobox"
+        aria-autocomplete="list"
+        aria-expanded={showSuggestions}
+        aria-controls={inputId ? `${inputId}-listbox` : undefined}
+        aria-activedescendant={highlighted >= 0 ? (inputId ? `${inputId}-option-${highlighted}` : undefined) : undefined}
         value={value}
+        onKeyDown={handleKeyDown}
         onChange={(e) => onChange(e.target.value)}
         onFocus={() => value.length >= 2 && suggestions.length > 0 && setShowSuggestions(true)}
         placeholder={placeholder}
@@ -199,14 +234,20 @@ export default function CourseSearchInput({
       />
       {showSuggestions && suggestions.length > 0 && (
         <div 
+          id={inputId ? `${inputId}-listbox` : undefined}
           ref={suggestionsRef} 
+          role="listbox"
           className="absolute z-50 w-full mt-1 bg-white border rounded-lg shadow-lg max-h-64 overflow-y-auto"
         >
           {suggestions.map((course, idx) => (
             <div 
+              id={inputId ? `${inputId}-option-${idx}` : undefined}
               key={idx} 
+              role="option"
+              aria-selected={highlighted === idx}
+              onMouseDown={(e) => e.preventDefault()}
               onClick={() => handleSelect(course)} 
-              className="px-3 py-2 hover:bg-gray-100 cursor-pointer border-b last:border-0"
+              className={`px-3 py-2 cursor-pointer border-b last:border-0 ${highlighted === idx ? 'bg-gray-100' : 'hover:bg-gray-100'}`}
             >
               <div className="flex justify-between items-center">
                 <div>
