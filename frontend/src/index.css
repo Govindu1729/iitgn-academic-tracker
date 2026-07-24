@@ -22,6 +22,11 @@
   [role="button"] {
     @apply min-h-[44px] md:min-h-0;
   }
+
+  /* Visible focus styles for keyboard users */
+  button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible, [role="button"]:focus-visible {
+    @apply outline-none ring-2 ring-offset-2 ring-blue-500;
+  }
   
   /* Responsive tables */
   table {

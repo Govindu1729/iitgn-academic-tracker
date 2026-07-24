@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
+import FocusTrap from 'focus-trap-react';
 import CourseSearchInput from './CourseSearchInput';
 import toast from 'react-hot-toast';
 
@@ -67,7 +68,8 @@ export default function AddEditCourseModal({ isOpen, onClose, onSubmit, course =
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
       role="dialog" aria-modal="true" aria-labelledby="add-course-title">
-      <div ref={modalRef} className="bg-white rounded-lg w-full max-w-md max-h-[90vh] overflow-y-auto">
+      <FocusTrap active={isOpen} focusTrapOptions={{ initialFocus: () => firstFieldRef.current }}>
+        <div ref={modalRef} className="bg-white rounded-lg w-full max-w-md max-h-[90vh] overflow-y-auto">
         <div className="sticky top-0 bg-white border-b px-4 md:px-6 py-3 md:py-4">
           <div className="flex items-center justify-between">
             <h2 id="add-course-title" className="text-lg md:text-xl font-bold">{course ? 'Edit Course' : 'Add Course'}</h2>
@@ -149,7 +151,8 @@ export default function AddEditCourseModal({ isOpen, onClose, onSubmit, course =
             <button type="submit" className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg text-sm">{course ? 'Update' : 'Add'}</button>
           </div>
         </form>
-      </div>
+        </div>
+      </FocusTrap>
     </div>
   );
 }
