@@ -141,6 +141,29 @@ export default function CourseHistoryPage() {
         <div className="flex flex-wrap gap-2">
           <button onClick={() => setBulkImportOpen(true)} className="btn-responsive bg-blue-600 text-white hover:bg-blue-700">📋 Import</button>
           <button onClick={() => { setEditingCourse(null); setModalOpen(true); }} className="btn-responsive bg-blue-600 text-white hover:bg-blue-700">+ Add</button>
+          <button onClick={async () => {
+            try {
+              const res = await courseAPI.exportCourses();
+              const blob = new Blob([res.data], { type: res.headers['content-type'] || 'application/octet-stream' });
+              let filename = 'courses.xlsx';
+              const disposition = res.headers['content-disposition'];
+              if (disposition) {
+                const m = /filename="?([^";]+)"?/.exec(disposition);
+                if (m && m[1]) filename = m[1];
+              }
+              const url = window.URL.createObjectURL(blob);
+              const a = document.createElement('a');
+              a.href = url;
+              a.download = filename;
+              document.body.appendChild(a);
+              a.click();
+              a.remove();
+              window.URL.revokeObjectURL(url);
+              toast.success('Exported courses');
+            } catch (error) {
+              toast.error('Failed to export courses');
+            }
+          }} className="btn-responsive bg-green-600 text-white hover:bg-green-700">⬇️ Export</button>
         </div>
       </div>
 

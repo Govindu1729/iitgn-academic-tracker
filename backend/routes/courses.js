@@ -3,6 +3,8 @@ import express from 'express';
 import { body, validationResult } from 'express-validator';
 import { authenticate } from '../middleware/auth.js';
 import Course from '../models/Course.js';
+import ExcelJS from 'exceljs';
+import normalizeBasketName from '../utils/basketMapper.js';
 import logger from '../utils/logger.js';
 
 const router = express.Router();
@@ -113,6 +115,51 @@ router.delete('/:id', authenticate, async (req, res) => {
     res.json({ message: 'Course deleted' });
   } catch (error) {
     logger.error('Delete error: %o', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// Export courses to Excel (server-side)
+router.get('/export', authenticate, async (req, res) => {
+  try {
+    const courses = await Course.find({ userId: req.userId }).sort({ academicYear: -1, semesterOrder: 1 });
+
+    const workbook = new ExcelJS.Workbook();
+    const ws = workbook.addWorksheet('Courses');
+
+    ws.columns = [
+      { header: 'Course Code', key: 'courseCode', width: 15 },
+      { header: 'Course Name', key: 'courseName', width: 40 },
+      { header: 'Credits', key: 'credits', width: 10 },
+      { header: 'Grade', key: 'grade', width: 8 },
+      { header: 'Semester', key: 'semester', width: 12 },
+      { header: 'Academic Year', key: 'academicYear', width: 12 },
+      { header: 'Basket', key: 'basketType', width: 20 },
+      { header: 'Department', key: 'department', width: 12 },
+      { header: 'Planned', key: 'isPlanned', width: 8 }
+    ];
+
+    courses.forEach(c => {
+      ws.addRow({
+        courseCode: c.courseCode,
+        courseName: c.courseName,
+        credits: c.credits,
+        grade: c.grade || '',
+        semester: c.semester,
+        academicYear: c.academicYear,
+        basketType: normalizeBasketName(c.basketType),
+        department: c.department,
+        isPlanned: c.isPlanned ? 'Yes' : 'No'
+      });
+    });
+
+    const buffer = await workbook.xlsx.writeBuffer();
+    const filename = `courses-${req.userId}.xlsx`;
+    res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+    res.send(Buffer.from(buffer));
+  } catch (error) {
+    logger.error('Export courses error: %o', error);
     res.status(500).json({ message: 'Server error' });
   }
 });

@@ -37,7 +37,8 @@ export const courseAPI = {
   getBySemester: () => api.get('/courses/by-semester'),
   create: (data) => api.post('/courses', data),
   update: (id, data) => api.put(`/courses/${id}`, data),
-  delete: (id) => api.delete(`/courses/${id}`)
+  delete: (id) => api.delete(`/courses/${id}`),
+  exportCourses: () => api.get('/courses/export', { responseType: 'blob' })
 };
 
 export const analyticsAPI = {
