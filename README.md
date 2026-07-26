@@ -33,3 +33,4 @@ npm run dev
 cd frontend
 npm install
 npm run dev
+# IITGN Academic Tracker - Update

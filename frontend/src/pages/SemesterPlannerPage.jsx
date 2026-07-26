@@ -10,8 +10,10 @@ import CourseSearchInput from '../components/CourseSearchInput';
 // Then in AddEditPlannedModal, replace the course code input with CourseSearchInput similarly
 
 const MAX_CREDITS_PER_SEMESTER = 28;
+const MAX_OVERLOAD_CREDITS = 32; 
 const NORMAL_CREDITS_PER_SEMESTER = 22;
 const OVERLOAD_CPI_THRESHOLD = 7.0;
+const MIN_CPI_FOR_OVERLOAD = 7.0; 
 
 export default function SemesterPlannerPage() {
   const { user } = useAuth();
@@ -80,8 +82,7 @@ export default function SemesterPlannerPage() {
   };
 
   const canOverload = cpi >= OVERLOAD_CPI_THRESHOLD;
-  const effectiveMaxCredits = canOverload ? 32 : MAX_CREDITS_PER_SEMESTER;
-
+  const effectiveMaxCredits = cpi >= MIN_CPI_FOR_OVERLOAD ? MAX_OVERLOAD_CREDITS : MAX_CREDITS_PER_SEMESTER;
   const groupedBySemester = plannedCourses.reduce((acc, course) => {
     const key = `${course.academicYear} - Semester ${course.semester}`;
     if (!acc[key]) acc[key] = [];

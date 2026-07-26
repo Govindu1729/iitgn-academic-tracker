@@ -2,7 +2,7 @@
 import { useState } from 'react';
 import toast from 'react-hot-toast';
 
-// Helper functions for auto-detection (same as before)
+// Helper functions for auto-detection
 const detectDepartment = (courseCode) => {
   const code = courseCode.toUpperCase();
   if (code.startsWith('CS')) return 'CSE';
@@ -101,7 +101,10 @@ export default function BulkImportModal({ isOpen, onClose, onImport, existingCou
   const [preview, setPreview] = useState([]);
   const [detectedSemester, setDetectedSemester] = useState('');
   const [detectedYear, setDetectedYear] = useState('');
-  const [duplicateAction, setDuplicateAction] = useState('skip'); // 'skip', 'replace', 'keep-both'
+  // Manual override states
+  const [manualSemester, setManualSemester] = useState('');
+  const [manualYear, setManualYear] = useState('');
+  const [duplicateAction, setDuplicateAction] = useState('skip');
   const [showDuplicateWarning, setShowDuplicateWarning] = useState(false);
 
   const parseIMSData = (text) => {
@@ -196,8 +199,13 @@ export default function BulkImportModal({ isOpen, onClose, onImport, existingCou
     const duplicateCount = parsed.filter(c => c.isDuplicate).length;
     
     if (parsed.length > 0) {
-      setDetectedSemester(parsed[0].semester);
-      setDetectedYear(parsed[0].academicYear);
+      const sem = parsed[0].semester;
+      const year = parsed[0].academicYear;
+      setDetectedSemester(sem);
+      setDetectedYear(year);
+      // Set manual fields to detected values so dropdowns show them
+      setManualSemester(sem);
+      setManualYear(year);
     }
     
     setPreview(parsed);
@@ -214,10 +222,8 @@ export default function BulkImportModal({ isOpen, onClose, onImport, existingCou
     if (duplicateAction === 'skip') {
       return preview.filter(c => !c.isDuplicate);
     } else if (duplicateAction === 'replace') {
-      // For replace, we still return duplicates but they will replace existing ones
       return preview;
     } else {
-      // keep-both - return all
       return preview;
     }
   };
@@ -237,6 +243,10 @@ export default function BulkImportModal({ isOpen, onClose, onImport, existingCou
       return;
     }
     
+    // Use manual values if set, otherwise fallback to detected
+    const finalSemester = manualSemester || detectedSemester;
+    const finalYear = manualYear || detectedYear;
+    
     // Enrich courses with department and basket
     const enrichedCourses = filteredCourses.map(course => ({
       ...course,
@@ -244,7 +254,7 @@ export default function BulkImportModal({ isOpen, onClose, onImport, existingCou
       basketType: detectBasketType(course.courseCode, course.courseName)
     }));
     
-    onImport(enrichedCourses, detectedSemester, detectedYear, {
+    onImport(enrichedCourses, finalSemester, finalYear, {
       action: duplicateAction,
       duplicatesToReplace: duplicatesToReplace.map(c => c.courseCode)
     });
@@ -253,6 +263,8 @@ export default function BulkImportModal({ isOpen, onClose, onImport, existingCou
     setPreview([]);
     setDetectedSemester('');
     setDetectedYear('');
+    setManualSemester('');
+    setManualYear('');
     setShowDuplicateWarning(false);
     onClose();
   };
@@ -287,6 +299,40 @@ export default function BulkImportModal({ isOpen, onClose, onImport, existingCou
             className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-iitgn-blue font-mono text-sm"
           />
         </div>
+
+        {/* Manual Override Section */}
+        {preview.length > 0 && (
+          <div className="grid grid-cols-2 gap-4 mb-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Semester</label>
+              <select
+                value={manualSemester}
+                onChange={(e) => setManualSemester(e.target.value)}
+                className="w-full px-3 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-iitgn-blue"
+              >
+                <option value="">Auto-detect ({detectedSemester || 'N/A'})</option>
+                <option value="I">Semester I</option>
+                <option value="II">Semester II</option>
+                <option value="Summer">Summer</option>
+              </select>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Academic Year</label>
+              <select
+                value={manualYear}
+                onChange={(e) => setManualYear(e.target.value)}
+                className="w-full px-3 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-iitgn-blue"
+              >
+                <option value="">Auto-detect ({detectedYear || 'N/A'})</option>
+                <option value="2024-25">2024-25</option>
+                <option value="2025-26">2025-26</option>
+                <option value="2026-27">2026-27</option>
+                <option value="2027-28">2027-28</option>
+                <option value="2028-29">2028-29</option>
+              </select>
+            </div>
+          </div>
+        )}
 
         <div className="flex gap-2 mb-4">
           <button
@@ -344,7 +390,7 @@ export default function BulkImportModal({ isOpen, onClose, onImport, existingCou
         {preview.length > 0 && (
           <>
             <div className="mb-2 text-sm text-gray-600">
-              📅 {detectedYear} - Semester {detectedSemester}
+              📅 {manualYear || detectedYear || 'N/A'} - Semester {manualSemester || detectedSemester || 'N/A'}
               {showDuplicateWarning && (
                 <span className="ml-2 text-orange-600">
                   ({newCourses.length} new, {duplicateCourses.length} duplicates)

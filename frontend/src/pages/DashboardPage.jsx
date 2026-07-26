@@ -6,7 +6,7 @@ import ProgressBar from '../components/ProgressBar';
 import CPIWarning from '../components/CPIWarning';
 import { programList, basketOrder, basketLabels } from '../utils/programRequirements';
 import toast from 'react-hot-toast';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts';
 
 export default function DashboardPage() {
   const { user } = useAuth();
@@ -40,27 +40,23 @@ export default function DashboardPage() {
   const totalCredits = calculateTotalCredits(completedCourses);
   const basketCredits = getCreditsByBasket(completedCourses);
   const cpi = calculateCPI(completedCourses);
-  // frontend/src/pages/DashboardPage.jsx
-// Add batch-specific logic
-
+  
+  // Batch-specific logic for curriculum changes
   const getBatchSpecificRequirements = (program, admissionYear) => {
-  // For EE students admitted from 2025-26
     if (program === 'BTech_EE' && admissionYear >= 2025) {
       return {
         totalCredits: 172,
         note: 'EE 341 (4 credits) replaces EE 313 (3 credits)'
       };
-   }
-  
-  // For all students from 2025-26
+    }
     if (admissionYear >= 2025) {
       return {
-       note: 'ES 119 (Principles of AI) replaces ES 113 (Data Centric Computing)'
-     };
-   }
-  
-   return {};
+        note: 'ES 119 (Principles of AI) replaces ES 113 (Data Centric Computing)'
+      };
+    }
+    return {};
   };
+
   const getSemesterCreditsData = () => {
     const semesterCredits = {};
     completedCourses.forEach(course => {
@@ -71,8 +67,7 @@ export default function DashboardPage() {
   };
 
   const semesterCreditsData = getSemesterCreditsData();
-
-  const COLORS = ['#3b82f6', '#8b5cf6', '#10b981', '#f59e0b', '#ef4444', '#ec489a'];
+  const totalRequired = programRequirements?.totalCreditsRequired || 170;
 
   if (loading) {
     return (
@@ -92,7 +87,7 @@ export default function DashboardPage() {
       <CPIWarning cpi={cpi} />
 
       {/* Stats Cards - Responsive Grid */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4 mb-4 md:mb-8">
+      <div className="grid grid-cols-2 lg:grid-cols-5 gap-3 md:gap-4 mb-4 md:mb-8">
         <div className="stat-card">
           <div className="text-xs md:text-sm text-gray-500">CPI</div>
           <div className="text-xl md:text-3xl lg:text-4xl font-bold text-blue-600">{cpi.toFixed(2)}</div>
@@ -100,7 +95,14 @@ export default function DashboardPage() {
         <div className="stat-card">
           <div className="text-xs md:text-sm text-gray-500">Credits</div>
           <div className="text-xl md:text-3xl lg:text-4xl font-bold text-green-600">{totalCredits}</div>
-          <div className="text-xs text-gray-400">/ {programRequirements?.totalCreditsRequired || 170}</div>
+          <div className="text-xs text-gray-400">/ {totalRequired}</div>
+        </div>
+        <div className="stat-card">
+          <div className="text-xs md:text-sm text-gray-500">Remaining</div>
+          <div className="text-xl md:text-3xl lg:text-4xl font-bold text-orange-600">
+            {Math.max(0, totalRequired - totalCredits)}
+          </div>
+          <div className="text-xs text-gray-400">to graduate</div>
         </div>
         <div className="stat-card">
           <div className="text-xs md:text-sm text-gray-500">Courses</div>
@@ -108,7 +110,26 @@ export default function DashboardPage() {
         </div>
         <div className="stat-card">
           <div className="text-xs md:text-sm text-gray-500">Planned</div>
-          <div className="text-xl md:text-3xl lg:text-4xl font-bold text-orange-600">{courses.filter(c => c.isPlanned).length}</div>
+          <div className="text-xl md:text-3xl lg:text-4xl font-bold text-orange-600">
+            {courses.filter(c => c.isPlanned).length}
+          </div>
+        </div>
+      </div>
+
+      {/* Graduation Progress Bar */}
+      <div className="bg-white rounded-lg shadow-md p-4 md:p-6 mb-4 md:mb-8">
+        <div className="flex justify-between items-center mb-2">
+          <span className="font-medium text-gray-700">Graduation Progress</span>
+          <span className="text-sm text-gray-500">
+            {totalCredits} / {totalRequired} credits
+            ({Math.round((totalCredits / totalRequired) * 100)}%)
+          </span>
+        </div>
+        <div className="w-full bg-gray-200 rounded-full h-3">
+          <div 
+            className="bg-iitgn-blue h-3 rounded-full transition-all duration-500"
+            style={{ width: `${Math.min((totalCredits / totalRequired) * 100, 100)}%` }}
+          />
         </div>
       </div>
 
@@ -149,7 +170,10 @@ export default function DashboardPage() {
                   <Tooltip />
                   <Bar dataKey="credits" fill="#3b82f6">
                     {semesterCreditsData.map((entry, index) => (
-                      <Cell key={index} fill={entry.credits > 28 ? '#ef4444' : entry.credits > 22 ? '#f59e0b' : '#10b981'} />
+                      <Cell 
+                        key={index} 
+                        fill={entry.credits > 28 ? '#ef4444' : entry.credits > 22 ? '#f59e0b' : '#10b981'} 
+                      />
                     ))}
                   </Bar>
                 </BarChart>
@@ -179,7 +203,9 @@ export default function DashboardPage() {
                 {completedCourses.slice(0, 5).map(course => (
                   <tr key={course._id} className="border-b">
                     <td className="py-2 md:py-3 font-mono text-xs md:text-sm">{course.courseCode}</td>
-                    <td className="py-2 md:py-3 text-sm md:text-base truncate max-w-[150px] md:max-w-none">{course.courseName}</td>
+                    <td className="py-2 md:py-3 text-sm md:text-base truncate max-w-[150px] md:max-w-none">
+                      {course.courseName}
+                    </td>
                     <td className="py-2 md:py-3 text-sm">{course.credits}</td>
                     <td className="py-2 md:py-3 text-sm font-semibold">{course.grade || '-'}</td>
                   </tr>

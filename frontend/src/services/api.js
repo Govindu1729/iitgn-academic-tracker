@@ -1,8 +1,10 @@
 // frontend/src/services/api.js
 import axios from 'axios';
 
-// ✅ Hardcode to backend URL for testing
-const API_URL = 'http://localhost:5001/api';
+// Replace the hardcoded URL with conditional logic
+const API_URL = process.env.NODE_ENV === 'production' 
+  ? 'https://your-backend-url.onrender.com/api'  // ✅ Replace with your Render URL
+  : 'http://localhost:5001/api';
 
 const api = axios.create({
   baseURL: API_URL,
@@ -24,7 +26,8 @@ export const courseAPI = {
   getBySemester: () => api.get('/courses/by-semester'),
   create: (data) => api.post('/courses', data),
   update: (id, data) => api.put(`/courses/${id}`, data),
-  delete: (id) => api.delete(`/courses/${id}`)
+  delete: (id) => api.delete(`/courses/${id}`),
+  exportCourses: () => api.get('/courses/export', { responseType: 'blob' })
 };
 
 export const analyticsAPI = {

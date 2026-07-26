@@ -1,7 +1,21 @@
 // backend/data/courseCatalog.js
-// Pre-populated course catalog based on IITGN timetables
+// Complete course catalog for IITGN BTech programs
+// Includes batch-specific variations
+
 export const courseCatalog = [
-  // First Year Institute Core
+  // ==================== 2022-23 Batch Specific ====================
+  // These courses were offered only for 2022-23 batch
+  
+  // Old curriculum courses (replaced in later batches)
+  { courseCode: 'ES113', courseName: 'Data-Centric Computing', credits: 3, basketType: 'Institute Core', department: 'Institute', applicableBatches: ['2022-23', '2023-24'] },
+  { courseCode: 'ES114', courseName: 'Probability, Statistics and Data Visualization', credits: 3, basketType: 'Institute Core', department: 'Institute', applicableBatches: ['2022-23'] },
+  { courseCode: 'EE313', courseName: 'Communication Systems', credits: 3, basketType: 'Discipline Core', department: 'EE', applicableBatches: ['2022-23', '2023-24', '2024-25'] },
+  
+  // ==================== 2023-24 Batch Specific ====================
+  { courseCode: 'ES119', courseName: 'Principles of Artificial Intelligence', credits: 4, basketType: 'Institute Core', department: 'Institute', applicableBatches: ['2023-24', '2024-25', '2025-26', '2026-27'] },
+  { courseCode: 'EE341', courseName: 'Communication Systems', credits: 4, basketType: 'Discipline Core', department: 'EE', applicableBatches: ['2025-26', '2026-27', '2027-28'] },
+  
+  // ==================== First Year Institute Core (All Batches) ====================
   { courseCode: 'FP100', courseName: 'Foundation Programme', credits: 4, basketType: 'Institute Core', department: 'Institute' },
   { courseCode: 'ES101', courseName: 'Engineering Graphics', credits: 3, basketType: 'Institute Core', department: 'Institute' },
   { courseCode: 'ES112', courseName: 'Computing', credits: 3, basketType: 'Institute Core', department: 'Institute' },
@@ -14,22 +28,21 @@ export const courseCatalog = [
   { courseCode: 'PE102', courseName: 'Physical Education', credits: 0, basketType: 'Institute Core', department: 'Institute' },
   { courseCode: 'PE103', courseName: 'Physical Education', credits: 0, basketType: 'Institute Core', department: 'Institute' },
   { courseCode: 'PE104', courseName: 'Physical Education', credits: 0, basketType: 'Institute Core', department: 'Institute' },
-  { courseCode: 'IN101', courseName: 'Comprehensive Viva Voce', credits: 0, basketType: 'Institute Core', department: 'Institute' },
-  { courseCode: 'IN102', courseName: 'Comprehensive Viva Voce', credits: 0, basketType: 'Institute Core', department: 'Institute' },
-  { courseCode: 'IN103', courseName: 'Comprehensive Viva Voce', credits: 0, basketType: 'Institute Core', department: 'Institute' },
-  { courseCode: 'IN104', courseName: 'Comprehensive Viva Voce', credits: 0, basketType: 'Institute Core', department: 'Institute' },
-  { courseCode: 'IN105', courseName: 'Comprehensive Viva Voce', credits: 0, basketType: 'Institute Core', department: 'Institute' },
-  { courseCode: 'IN106', courseName: 'Comprehensive Viva Voce', credits: 0, basketType: 'Institute Core', department: 'Institute' },
-  { courseCode: 'IN107', courseName: 'Comprehensive Viva Voce', credits: 0, basketType: 'Institute Core', department: 'Institute' },
-  { courseCode: 'IN108', courseName: 'Comprehensive Viva Voce', credits: 0, basketType: 'Institute Core', department: 'Institute' },
+  
+  // Comprehensive Viva Voce (All Semesters)
+  { courseCode: 'IN101', courseName: 'Comprehensive Viva Voce I', credits: 0, basketType: 'Institute Core', department: 'Institute' },
+  { courseCode: 'IN102', courseName: 'Comprehensive Viva Voce II', credits: 0, basketType: 'Institute Core', department: 'Institute' },
+  { courseCode: 'IN103', courseName: 'Comprehensive Viva Voce III', credits: 0, basketType: 'Institute Core', department: 'Institute' },
+  { courseCode: 'IN104', courseName: 'Comprehensive Viva Voce IV', credits: 0, basketType: 'Institute Core', department: 'Institute' },
+  { courseCode: 'IN105', courseName: 'Comprehensive Viva Voce V', credits: 0, basketType: 'Institute Core', department: 'Institute' },
+  { courseCode: 'IN106', courseName: 'Comprehensive Viva Voce VI', credits: 0, basketType: 'Institute Core', department: 'Institute' },
+  { courseCode: 'IN107', courseName: 'Comprehensive Viva Voce VII', credits: 0, basketType: 'Institute Core', department: 'Institute' },
+  { courseCode: 'IN108', courseName: 'Comprehensive Viva Voce VIII', credits: 0, basketType: 'Institute Core', department: 'Institute' },
 
-  // Second Year Institute Core
-  { courseCode: 'ES113', courseName: 'Data-Centric Computing', credits: 3, basketType: 'Institute Core', department: 'Institute' },
-  { courseCode: 'ES114', courseName: 'Probability, Statistics and Data Visualization', credits: 3, basketType: 'Institute Core', department: 'Institute' },
+  // ==================== Second Year Institute Core ====================
   { courseCode: 'ES116', courseName: 'Principles and Applications of Electrical Engineering', credits: 5, basketType: 'Institute Core', department: 'Institute' },
   { courseCode: 'ES117', courseName: 'The World of Engineering', credits: 2, basketType: 'Institute Core', department: 'Institute' },
   { courseCode: 'ES118', courseName: 'Materials for the Future', credits: 3, basketType: 'Materials Basket', department: 'MSE' },
-  { courseCode: 'ES119', courseName: 'Principles of Artificial Intelligence', credits: 4, basketType: 'Institute Core', department: 'Institute' },
   { courseCode: 'GE101', courseName: 'General Education I', credits: 2, basketType: 'General Education', department: 'Institute' },
   { courseCode: 'GE201', courseName: 'General Education II', credits: 2, basketType: 'General Education', department: 'Institute' },
   { courseCode: 'MA104', courseName: 'Ordinary Differential Equations', credits: 2, basketType: 'Mathematics Basket', department: 'Maths' },
@@ -45,11 +58,8 @@ export const courseCatalog = [
   { courseCode: 'ES243', courseName: 'Biology for Engineers', credits: 4, basketType: 'Institute Core', department: 'Institute' },
   { courseCode: 'ES244', courseName: 'Signals, Systems and Random Processes', credits: 4, basketType: 'Institute Core', department: 'Institute' },
   { courseCode: 'ES245', courseName: 'Control Systems', credits: 4, basketType: 'Institute Core', department: 'Institute' },
-  { courseCode: 'ES301', courseName: 'Data Structures and Algorithms II', credits: 4, basketType: 'Discipline Core', department: 'CSE' },
-  { courseCode: 'ES335', courseName: 'Machine Learning', credits: 4, basketType: 'Discipline Elective', department: 'CSE' },
-  { courseCode: 'ES336', courseName: 'Computer Organization and Architecture', credits: 4, basketType: 'Discipline Core', department: 'CSE' },
 
-  // HSS Courses
+  // ==================== HSS Courses (All) ====================
   { courseCode: 'HS151', courseName: 'Economics', credits: 4, basketType: 'HSS', department: 'HSS' },
   { courseCode: 'HS221', courseName: 'Introduction to Philosophy', credits: 4, basketType: 'HSS', department: 'HSS' },
   { courseCode: 'HS201', courseName: 'World Civilizations and Cultures', credits: 4, basketType: 'HSS', department: 'HSS' },
@@ -70,7 +80,7 @@ export const courseCatalog = [
   { courseCode: 'HS647', courseName: 'Literature, Theory and Social Context', credits: 4, basketType: 'HSS', department: 'HSS' },
   { courseCode: 'HS651', courseName: 'Critical Perspectives in Sociology', credits: 4, basketType: 'HSS', department: 'HSS' },
 
-  // Science Basket Courses
+  // ==================== Science Basket ====================
   { courseCode: 'PH201', courseName: 'Introduction to Electrodynamics', credits: 4, basketType: 'Science Basket', department: 'Physics' },
   { courseCode: 'PH202', courseName: 'Introduction to Quantum Physics', credits: 4, basketType: 'Science Basket', department: 'Physics' },
   { courseCode: 'PH203', courseName: 'Solid State Physics', credits: 4, basketType: 'Science Basket', department: 'Physics' },
@@ -82,7 +92,8 @@ export const courseCatalog = [
   { courseCode: 'EH304', courseName: 'Drone Data Acquisition Processing and Interpretation', credits: 2, basketType: 'Science Basket', department: 'Earth Sciences' },
   { courseCode: 'BS401', courseName: 'Nanoscale Science', credits: 4, basketType: 'Science Basket', department: 'Chemistry' },
 
-  // CSE Discipline Courses
+  // ==================== CSE Discipline Courses ====================
+  // Core
   { courseCode: 'CS201', courseName: 'Theory of Computing', credits: 4, basketType: 'Discipline Core', department: 'CSE' },
   { courseCode: 'CS202', courseName: 'Software Tools and Techniques for CSE', credits: 4, basketType: 'Discipline Core', department: 'CSE' },
   { courseCode: 'CS203', courseName: 'Software Tools and Techniques for AI', credits: 4, basketType: 'Discipline Core', department: 'AI' },
@@ -91,6 +102,10 @@ export const courseCatalog = [
   { courseCode: 'CS329', courseName: 'Foundations of AI: Multiagent Systems', credits: 4, basketType: 'Discipline Core', department: 'CSE' },
   { courseCode: 'CS330', courseName: 'Operating Systems', credits: 4, basketType: 'Discipline Core', department: 'CSE' },
   { courseCode: 'CS331', courseName: 'Computer Networks', credits: 4, basketType: 'Discipline Core', department: 'CSE' },
+  { courseCode: 'ES301', courseName: 'Data Structures and Algorithms II', credits: 4, basketType: 'Discipline Core', department: 'CSE' },
+  { courseCode: 'ES336', courseName: 'Computer Organization and Architecture', credits: 4, basketType: 'Discipline Core', department: 'CSE' },
+  
+  // Electives
   { courseCode: 'CS327', courseName: 'Compilers', credits: 5, basketType: 'Discipline Elective', department: 'CSE' },
   { courseCode: 'CS431', courseName: 'Computer and Network Security', credits: 4, basketType: 'Discipline Elective', department: 'CSE' },
   { courseCode: 'CS432', courseName: 'Databases', credits: 4, basketType: 'Discipline Elective', department: 'CSE' },
@@ -108,11 +123,13 @@ export const courseCatalog = [
   { courseCode: 'CS619', courseName: 'CS Theory Toolkit', credits: 4, basketType: 'Discipline Elective', department: 'CSE' },
   { courseCode: 'CS620', courseName: 'Incentives and Machine Learning', credits: 4, basketType: 'Discipline Elective', department: 'CSE' },
   { courseCode: 'CS621', courseName: 'Ethics of AI', credits: 4, basketType: 'Discipline Elective', department: 'CSE' },
+  { courseCode: 'ES335', courseName: 'Machine Learning', credits: 4, basketType: 'Discipline Elective', department: 'CSE' },
   { courseCode: 'ES666', courseName: 'Computer Vision', credits: 4, basketType: 'Discipline Elective', department: 'CSE' },
   { courseCode: 'ES667', courseName: 'Deep Learning', credits: 4, basketType: 'Discipline Elective', department: 'CSE' },
   { courseCode: 'ES670', courseName: 'Matrix Methods for Signal Processing, Data Science and ML', credits: 4, basketType: 'Discipline Elective', department: 'CSE' },
 
-  // EE Discipline Courses
+  // ==================== EE Discipline Courses ====================
+  // Core
   { courseCode: 'EE221', courseName: 'Electronic Devices', credits: 3, basketType: 'Discipline Core', department: 'EE' },
   { courseCode: 'EE223', courseName: 'Electrical Machines', credits: 4, basketType: 'Discipline Core', department: 'EE' },
   { courseCode: 'EE224', courseName: 'Power Systems', credits: 4, basketType: 'Discipline Core', department: 'EE' },
@@ -123,7 +140,8 @@ export const courseCatalog = [
   { courseCode: 'EE322', courseName: 'Analog and Mixed Signal Circuits', credits: 4, basketType: 'Discipline Core', department: 'EE' },
   { courseCode: 'EE323', courseName: 'Digital Signal Processing', credits: 4, basketType: 'Discipline Core', department: 'EE' },
   { courseCode: 'EE333', courseName: 'Power Electronics', credits: 4, basketType: 'Discipline Core', department: 'EE' },
-  { courseCode: 'EE341', courseName: 'Communication Systems', credits: 4, basketType: 'Discipline Core', department: 'EE' },
+  
+  // Electives
   { courseCode: 'EE426', courseName: 'Electric Vehicle Technology', credits: 4, basketType: 'Discipline Elective', department: 'EE' },
   { courseCode: 'EE617', courseName: 'VLSI Design', credits: 4, basketType: 'Discipline Elective', department: 'EE' },
   { courseCode: 'EE644', courseName: 'Physics of Transistors', credits: 4, basketType: 'Discipline Elective', department: 'EE' },
@@ -141,7 +159,8 @@ export const courseCatalog = [
   { courseCode: 'ES668', courseName: '5G and Beyond', credits: 4, basketType: 'Discipline Elective', department: 'EE' },
   { courseCode: 'ES675', courseName: 'Photonics - Principles and Applications', credits: 4, basketType: 'Discipline Elective', department: 'EE' },
 
-  // ME Discipline Courses
+  // ==================== ME Discipline Courses ====================
+  // Core
   { courseCode: 'ME206', courseName: 'Statics and Dynamics', credits: 4, basketType: 'Discipline Core', department: 'ME' },
   { courseCode: 'ME207', courseName: 'Fluid Dynamics', credits: 5, basketType: 'Discipline Core', department: 'ME' },
   { courseCode: 'ME208', courseName: 'Vibrations', credits: 2, basketType: 'Discipline Core', department: 'ME' },
@@ -151,6 +170,8 @@ export const courseCatalog = [
   { courseCode: 'ME335', courseName: 'Synthesis and Analysis of Mechanisms', credits: 3, basketType: 'Discipline Core', department: 'ME' },
   { courseCode: 'ME337', courseName: 'Mechanical Systems Design', credits: 3, basketType: 'Discipline Core', department: 'ME' },
   { courseCode: 'ME362', courseName: 'Introduction to Manufacturing Systems and Metrology', credits: 3, basketType: 'Discipline Core', department: 'ME' },
+  
+  // Electives
   { courseCode: 'ME605', courseName: 'Computational Fluid Dynamics', credits: 4, basketType: 'Discipline Elective', department: 'ME' },
   { courseCode: 'ME628', courseName: 'Advanced Fluid Mechanics', credits: 4, basketType: 'Discipline Elective', department: 'ME' },
   { courseCode: 'ME639', courseName: 'Introduction to Robotics', credits: 5, basketType: 'Discipline Elective', department: 'ME' },
@@ -163,7 +184,8 @@ export const courseCatalog = [
   { courseCode: 'ES646', courseName: 'Elastodynamics and Vibrations', credits: 4, basketType: 'Discipline Elective', department: 'ME' },
   { courseCode: 'ES656', courseName: 'Human-Robot Interaction', credits: 4, basketType: 'Discipline Elective', department: 'ME' },
 
-  // ChemE Discipline Courses
+  // ==================== ChemE Discipline Courses ====================
+  // Core
   { courseCode: 'CL201', courseName: 'Chemical Process Calculations', credits: 3, basketType: 'Discipline Core', department: 'ChemE' },
   { courseCode: 'CL202', courseName: 'Chemical Engineering Thermodynamics', credits: 3, basketType: 'Discipline Core', department: 'ChemE' },
   { courseCode: 'CL203', courseName: 'Process Fluid Mechanics', credits: 3, basketType: 'Discipline Core', department: 'ChemE' },
@@ -177,6 +199,8 @@ export const courseCatalog = [
   { courseCode: 'CL325', courseName: 'Transport Phenomena', credits: 3, basketType: 'Discipline Core', department: 'ChemE' },
   { courseCode: 'CL326', courseName: 'Integrated Chemical Engineering Lab I', credits: 3, basketType: 'Discipline Core', department: 'ChemE' },
   { courseCode: 'CL327', courseName: 'Integrated Chemical Engineering Lab II', credits: 2, basketType: 'Discipline Core', department: 'ChemE' },
+  
+  // Electives
   { courseCode: 'CL324', courseName: 'Introduction to Polymer Science and Engineering', credits: 4, basketType: 'Discipline Elective', department: 'ChemE' },
   { courseCode: 'CL353', courseName: 'Introduction to Process Safety', credits: 2, basketType: 'Discipline Elective', department: 'ChemE' },
   { courseCode: 'CL426', courseName: 'Biochemical Engineering', credits: 4, basketType: 'Discipline Elective', department: 'ChemE' },
@@ -186,7 +210,8 @@ export const courseCatalog = [
   { courseCode: 'CL627', courseName: 'Particulate Solids: Processing and Surface Engineering', credits: 4, basketType: 'Discipline Elective', department: 'ChemE' },
   { courseCode: 'CL629', courseName: 'Fundamentals of Aerosol Science', credits: 4, basketType: 'Discipline Elective', department: 'ChemE' },
 
-  // Civil Discipline Courses
+  // ==================== Civil Discipline Courses ====================
+  // Core
   { courseCode: 'CE201', courseName: 'Earth Materials and Processes', credits: 2, basketType: 'Discipline Core', department: 'Civil' },
   { courseCode: 'CE202', courseName: 'Sustainability and Environment', credits: 3, basketType: 'Discipline Core', department: 'Civil' },
   { courseCode: 'CE203', courseName: 'Geospatial Engineering', credits: 3, basketType: 'Discipline Core', department: 'Civil' },
@@ -199,6 +224,8 @@ export const courseCatalog = [
   { courseCode: 'CE314', courseName: 'Geotechnical Engineering', credits: 4, basketType: 'Discipline Core', department: 'Civil' },
   { courseCode: 'CE403', courseName: 'Construction Technology and Management', credits: 4, basketType: 'Discipline Core', department: 'Civil' },
   { courseCode: 'CE404', courseName: 'Transportation Engineering', credits: 4, basketType: 'Discipline Core', department: 'Civil' },
+  
+  // Electives
   { courseCode: 'CE315', courseName: 'Civil Engineering Materials', credits: 4, basketType: 'Discipline Elective', department: 'Civil' },
   { courseCode: 'CE601', courseName: 'Advanced Geotechnical Engineering', credits: 5, basketType: 'Discipline Elective', department: 'Civil' },
   { courseCode: 'CE607', courseName: 'Advanced Structural Analysis', credits: 4, basketType: 'Discipline Elective', department: 'Civil' },
@@ -211,7 +238,8 @@ export const courseCatalog = [
   { courseCode: 'CE637', courseName: 'Infrastructure Systems: Planning and Management', credits: 4, basketType: 'Discipline Elective', department: 'Civil' },
   { courseCode: 'CE638', courseName: 'Advanced Concrete Technology', credits: 4, basketType: 'Discipline Elective', department: 'Civil' },
 
-  // MSE Discipline Courses
+  // ==================== MSE Discipline Courses ====================
+  // Core
   { courseCode: 'MSE202', courseName: 'Materials Thermodynamics', credits: 4, basketType: 'Discipline Core', department: 'MSE' },
   { courseCode: 'MSE204', courseName: 'Transport Phenomena in Materials Engineering', credits: 4, basketType: 'Discipline Core', department: 'MSE' },
   { courseCode: 'MSE205', courseName: 'Mechanical Behaviour of Materials', credits: 4, basketType: 'Discipline Core', department: 'MSE' },
@@ -226,6 +254,8 @@ export const courseCatalog = [
   { courseCode: 'MSE314', courseName: 'Materials Selection and Design', credits: 3, basketType: 'Materials Basket', department: 'MSE' },
   { courseCode: 'MSE315', courseName: 'Introduction to Computational Materials Engineering', credits: 4, basketType: 'Discipline Core', department: 'MSE' },
   { courseCode: 'MSE316', courseName: 'Corrosion and Degradation of Materials', credits: 4, basketType: 'Discipline Core', department: 'MSE' },
+  
+  // Electives
   { courseCode: 'MSE352', courseName: 'Material Characterization Techniques', credits: 4, basketType: 'Discipline Elective', department: 'MSE' },
   { courseCode: 'MSE403', courseName: 'Science and Technology of Welding and Joining', credits: 4, basketType: 'Discipline Elective', department: 'MSE' },
   { courseCode: 'MSE602', courseName: 'Computational Materials Engineering', credits: 4, basketType: 'Discipline Elective', department: 'MSE' },
@@ -236,7 +266,7 @@ export const courseCatalog = [
   { courseCode: 'MSE632', courseName: 'Characterization of Materials', credits: 4, basketType: 'Discipline Elective', department: 'MSE' },
   { courseCode: 'MSE634', courseName: 'Semiconductor Materials and Fabrication Process', credits: 4, basketType: 'Discipline Elective', department: 'MSE' },
 
-  // Project and External Exposure
+  // ==================== Project & External Exposure ====================
   { courseCode: 'OPC', courseName: 'Open Project Course', credits: 4, basketType: 'Project', department: 'Institute' },
   { courseCode: 'IN498', courseName: 'External Exposure', credits: 4, basketType: 'External Exposure', department: 'Institute' },
   { courseCode: 'XX299', courseName: 'Level 2 Project', credits: 4, basketType: 'Project', department: 'Institute' },
@@ -244,9 +274,21 @@ export const courseCatalog = [
   { courseCode: 'XX499', courseName: 'Level 4 Project', credits: 4, basketType: 'Project', department: 'Institute' },
 ];
 
-export const searchCatalog = (query) => {
+// Helper function to filter courses by batch
+export const getCoursesByBatch = (admissionYear) => {
+  const batchYear = `${admissionYear}-${String(admissionYear + 1).slice(-2)}`;
   return courseCatalog.filter(course => 
-    course.courseCode.toLowerCase().includes(query.toLowerCase()) ||
-    course.courseName.toLowerCase().includes(query.toLowerCase())
+    !course.applicableBatches || course.applicableBatches.includes(batchYear)
   );
+};
+
+// Helper function to search catalog
+export const searchCatalog = (query, admissionYear = null) => {
+  const catalog = admissionYear ? getCoursesByBatch(admissionYear) : courseCatalog;
+  if (!query || query.length < 2) return [];
+  const searchTerm = query.toLowerCase();
+  return catalog.filter(course => 
+    course.courseCode.toLowerCase().includes(searchTerm) ||
+    course.courseName.toLowerCase().includes(searchTerm)
+  ).slice(0, 10);
 };
