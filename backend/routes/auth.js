@@ -50,11 +50,13 @@ router.post('/signup', [
       currentSemester = 1
     } = req.body;
     
+    // Check if user exists
     const existingUser = await User.findOne({ email });
     if (existingUser) {
       return res.status(400).json({ message: 'User already exists' });
     }
 
+    // Create user
     const user = new User({ 
       email, 
       password,
@@ -125,14 +127,16 @@ router.post('/login', [
     
     const { email, password } = req.body;
     
+    // Find user
     const user = await User.findOne({ email });
     if (!user) {
-      return res.status(400).json({ message: 'Invalid credentials' });
+      return res.status(401).json({ message: 'Invalid credentials' });
     }
 
+    // Check password
     const isMatch = await user.comparePassword(password);
     if (!isMatch) {
-      return res.status(400).json({ message: 'Invalid credentials' });
+      return res.status(401).json({ message: 'Invalid credentials' });
     }
 
     // Generate program requirements if not present
@@ -184,7 +188,9 @@ router.post('/login', [
 router.post('/refresh', async (req, res) => {
   try {
     const token = req.cookies[REFRESH_COOKIE_NAME];
-    if (!token) return res.status(401).json({ message: 'No refresh token' });
+    if (!token) {
+      return res.status(401).json({ message: 'No refresh token' });
+    }
 
     let decoded;
     try {
@@ -194,12 +200,16 @@ router.post('/refresh', async (req, res) => {
     }
 
     const user = await User.findById(decoded.userId);
-    if (!user) return res.status(401).json({ message: 'User not found' });
+    if (!user) {
+      return res.status(401).json({ message: 'User not found' });
+    }
 
+    // Check token exists (rotation)
     if (!user.refreshTokens.includes(token)) {
       return res.status(401).json({ message: 'Refresh token revoked' });
     }
 
+    // Rotate tokens
     const newAccessToken = createAccessToken(user._id);
     const newRefreshToken = createRefreshToken(user._id);
 
@@ -248,7 +258,7 @@ router.post('/logout', async (req, res) => {
       }
     }
     res.clearCookie(REFRESH_COOKIE_NAME, refreshCookieOptions);
-    res.json({ message: 'Logged out' });
+    res.json({ message: 'Logged out successfully' });
   } catch (error) {
     logger.error('Logout error: %o', error);
     res.status(500).json({ message: 'Server error' });
@@ -350,6 +360,40 @@ router.get('/profile', authenticate, async (req, res) => {
     });
   } catch (error) {
     logger.error('Profile fetch error: %o', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// ==================== TEST ENDPOINT (remove in production) ====================
+router.get('/test-login', async (req, res) => {
+  try {
+    // Create a test user if none exists
+    const testEmail = 'test@iitgn.ac.in';
+    let user = await User.findOne({ email: testEmail });
+    
+    if (!user) {
+      user = new User({
+        email: testEmail,
+        password: 'test123',
+        primaryDiscipline: 'CSE',
+        programType: 'BTech',
+        admissionYear: 2026
+      });
+      await user.save();
+      
+      // Generate program requirements
+      const { generateProgramRequirements } = await import('../data/programRequirements.js');
+      user.programRequirements = generateProgramRequirements('CSE', 'BTech', null);
+      await user.save();
+    }
+    
+    res.json({
+      message: 'Test user created/available',
+      email: testEmail,
+      password: 'test123'
+    });
+  } catch (error) {
+    logger.error('Test login error: %o', error);
     res.status(500).json({ message: 'Server error' });
   }
 });
