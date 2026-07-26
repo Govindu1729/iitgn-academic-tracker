@@ -7,13 +7,14 @@ import {
   getProgramTypes,
   getApplicableProgramTypes,
   calculateDualMajorCredits,
-  findCommonCoreCourses,
-  DISCIPLINE_BASE
+  findCommonCoreCourses
 } from '../data/programRequirements.js';
 import User from '../models/User.js';
 import logger from '../utils/logger.js';
 
 const router = express.Router();
+
+// ==================== GET ENDPOINTS ====================
 
 // Get all available disciplines
 router.get('/disciplines', async (req, res) => {
@@ -21,7 +22,7 @@ router.get('/disciplines', async (req, res) => {
     const disciplines = getDisciplines();
     res.json(disciplines);
   } catch (error) {
-    logger.error(error);
+    logger.error('Disciplines error: %o', error);
     res.status(500).json({ message: 'Server error' });
   }
 });
@@ -32,7 +33,18 @@ router.get('/program-types', async (req, res) => {
     const types = getProgramTypes();
     res.json(types);
   } catch (error) {
-    logger.error(error);
+    logger.error('Program types error: %o', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// Get course credits map
+router.get('/course-credits', async (req, res) => {
+  try {
+    const { COURSE_CREDITS } = await import('../data/programRequirements.js');
+    res.json(COURSE_CREDITS);
+  } catch (error) {
+    logger.error('Course credits error: %o', error);
     res.status(500).json({ message: 'Server error' });
   }
 });
@@ -99,6 +111,34 @@ router.get('/applicable-programs', authenticate, async (req, res) => {
   }
 });
 
+// Get user's current program requirements
+router.get('/my-requirements', authenticate, async (req, res) => {
+  try {
+    const user = await User.findById(req.userId);
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+    
+    // If requirements not cached, generate them
+    if (!user.programRequirements) {
+      const requirements = generateProgramRequirements(
+        user.primaryDiscipline || 'CSE',
+        user.programType || 'BTech',
+        user.secondaryDiscipline || null
+      );
+      user.programRequirements = requirements;
+      await user.save();
+    }
+    
+    res.json(user.programRequirements);
+  } catch (error) {
+    logger.error('My requirements error: %o', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// ==================== POST ENDPOINTS ====================
+
 // Generate requirements for a specific program combination
 router.post('/generate-requirements', authenticate, async (req, res) => {
   try {
@@ -116,6 +156,8 @@ router.post('/generate-requirements', authenticate, async (req, res) => {
     
     // If Dual Major, also return detailed breakdown
     if (programType === 'DualMajor' && secondaryDiscipline) {
+      const programData = await import('../data/programRequirements.js');
+      const DISCIPLINE_BASE = programData.DISCIPLINE_BASE;
       const dualInfo = calculateDualMajorCredits(primaryDiscipline, secondaryDiscipline);
       requirements.dualMajorBreakdown = {
         ...dualInfo,
@@ -145,32 +187,6 @@ router.post('/generate-requirements', authenticate, async (req, res) => {
   }
 });
 
-// Get user's current program requirements
-router.get('/my-requirements', authenticate, async (req, res) => {
-  try {
-    const user = await User.findById(req.userId);
-    if (!user) {
-      return res.status(404).json({ message: 'User not found' });
-    }
-    
-    // If requirements not cached, generate them
-    if (!user.programRequirements) {
-      const requirements = generateProgramRequirements(
-        user.primaryDiscipline || 'CSE',
-        user.programType || 'BTech',
-        user.secondaryDiscipline || null
-      );
-      user.programRequirements = requirements;
-      await user.save();
-    }
-    
-    res.json(user.programRequirements);
-  } catch (error) {
-    logger.error('My requirements error: %o', error);
-    res.status(500).json({ message: 'Server error' });
-  }
-});
-
 // Calculate dual major breakdown for preview
 router.post('/dual-major-preview', authenticate, async (req, res) => {
   try {
@@ -179,6 +195,10 @@ router.post('/dual-major-preview', authenticate, async (req, res) => {
     if (!primaryDiscipline || !secondaryDiscipline) {
       return res.status(400).json({ message: 'Both disciplines are required' });
     }
+    
+    // Import dynamically to get the base data
+    const programData = await import('../data/programRequirements.js');
+    const DISCIPLINE_BASE = programData.DISCIPLINE_BASE;
     
     const dualInfo = calculateDualMajorCredits(primaryDiscipline, secondaryDiscipline);
     const primary = DISCIPLINE_BASE[primaryDiscipline];
@@ -218,17 +238,6 @@ router.post('/dual-major-preview', authenticate, async (req, res) => {
   }
 });
 
-// Get course catalog with credits
-router.get('/course-credits', async (req, res) => {
-  try {
-    const { COURSE_CREDITS } = await import('../data/programRequirements.js');
-    res.json(COURSE_CREDITS);
-  } catch (error) {
-    logger.error(error);
-    res.status(500).json({ message: 'Server error' });
-  }
-});
-
 // Get common courses between two disciplines
 router.post('/common-courses', authenticate, async (req, res) => {
   try {
@@ -239,6 +248,12 @@ router.post('/common-courses', authenticate, async (req, res) => {
     }
     
     const commonCourses = findCommonCoreCourses(primaryDiscipline, secondaryDiscipline);
+    
+    // Import dynamically for COURSE_CREDITS
+    const programData = await import('../data/programRequirements.js');
+    const DISCIPLINE_BASE = programData.DISCIPLINE_BASE;
+    const COURSE_CREDITS = programData.COURSE_CREDITS;
+    
     const primary = DISCIPLINE_BASE[primaryDiscipline];
     const secondary = DISCIPLINE_BASE[secondaryDiscipline];
     
@@ -246,8 +261,7 @@ router.post('/common-courses', authenticate, async (req, res) => {
       return res.status(404).json({ message: 'Discipline not found' });
     }
     
-    // Get course details
-    const { COURSE_CREDITS } = await import('../data/programRequirements.js');
+    // Get course details with credits
     const courseDetails = commonCourses.map(code => ({
       courseCode: code,
       credits: COURSE_CREDITS[code] || 0
@@ -261,10 +275,12 @@ router.post('/common-courses', authenticate, async (req, res) => {
       commonCourses: courseDetails,
       totalCommonCredits: totalCommonCredits,
       primaryCoreCourses: primary.disciplineCoreCourses,
-      secondaryCoreCourses: secondary.disciplineCoreCourses
+      secondaryCoreCourses: secondary.disciplineCoreCourses,
+      primaryCoreCredits: primary.disciplineCoreCredits,
+      secondaryCoreCredits: secondary.disciplineCoreCredits
     });
   } catch (error) {
-    logger.error(error);
+    logger.error('Common courses error: %o', error);
     res.status(500).json({ message: 'Server error' });
   }
 });
