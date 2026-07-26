@@ -19,13 +19,14 @@ export const AuthProvider = ({ children }) => {
         const { accessToken, user } = res.data;
         if (accessToken) {
           api.defaults.headers.common['Authorization'] = `Bearer ${accessToken}`;
+          localStorage.setItem('token', accessToken);
         }
         if (user) {
           setUser(user);
           try { localStorage.setItem('user', JSON.stringify(user)); } catch (e) {}
         }
       } catch (e) {
-        // no valid session
+        console.log('No active session:', e.message);
       } finally {
         setLoading(false);
       }
@@ -36,7 +37,10 @@ export const AuthProvider = ({ children }) => {
     try {
       const res = await api.post('/auth/login', { email, password });
       const { accessToken, user } = res.data;
-      if (accessToken) api.defaults.headers.common['Authorization'] = `Bearer ${accessToken}`;
+      if (accessToken) {
+        api.defaults.headers.common['Authorization'] = `Bearer ${accessToken}`;
+        localStorage.setItem('token', accessToken);
+      }
       if (user) {
         setUser(user);
         try { localStorage.setItem('user', JSON.stringify(user)); } catch (e) {}
@@ -44,21 +48,57 @@ export const AuthProvider = ({ children }) => {
       toast.success('Logged in successfully!');
       return true;
     } catch (error) {
+      console.error('Login error:', error.response?.data || error.message);
       toast.error(error.response?.data?.message || 'Login failed');
       return false;
     }
   };
 
+  // ✅ FIXED: Updated signup to match backend expectations
   const signup = async (email, password, program, admissionYear) => {
     try {
+      // Map old program codes to new discipline format
+      const disciplineMap = {
+        'BTech_CSE': 'CSE',
+        'BTech_AI': 'AI',
+        'BTech_EE': 'EE',
+        'BTech_ME': 'ME',
+        'BTech_CL': 'CL',
+        'BTech_CE': 'CE',
+        'BTech_MSE': 'MSE',
+        'BTech_ICDT': 'ICDT',
+        'BTech_DoubleMajor': 'CSE', // Default to CSE for dual major
+        'BTech_MTech_Dual': 'CSE',
+        'BTech_MSc_Dual': 'CSE'
+      };
+      
+      // Extract discipline from program code
+      let primaryDiscipline = disciplineMap[program] || 'CSE';
+      
+      // Determine program type
+      let programType = 'BTech';
+      if (program === 'BTech_DoubleMajor') programType = 'DualMajor';
+      else if (program === 'BTech_MTech_Dual') programType = 'DualDegree';
+      else if (program === 'BTech_MSc_Dual') programType = 'MScDual';
+      
       const res = await api.post('/auth/signup', { 
         email, 
-        password, 
-        program: program || 'BTech_CSE',
-        admissionYear: admissionYear || 2026
+        password,
+        primaryDiscipline,
+        programType,
+        secondaryDiscipline: '', // For dual programs, user will set later
+        admissionYear: admissionYear || 2026,
+        currentSemester: 1,
+        pursuingHonours: false,
+        pursuingMinor: false,
+        minorDiscipline: ''
       });
+      
       const { accessToken, user } = res.data;
-      if (accessToken) api.defaults.headers.common['Authorization'] = `Bearer ${accessToken}`;
+      if (accessToken) {
+        api.defaults.headers.common['Authorization'] = `Bearer ${accessToken}`;
+        localStorage.setItem('token', accessToken);
+      }
       if (user) {
         setUser(user);
         try { localStorage.setItem('user', JSON.stringify(user)); } catch (e) {}
@@ -66,6 +106,7 @@ export const AuthProvider = ({ children }) => {
       toast.success('Account created successfully!');
       return true;
     } catch (error) {
+      console.error('Signup error:', error.response?.data || error.message);
       toast.error(error.response?.data?.message || 'Signup failed');
       return false;
     }
@@ -93,6 +134,7 @@ export const AuthProvider = ({ children }) => {
         // ignore
       }
       localStorage.removeItem('user');
+      localStorage.removeItem('token');
       delete api.defaults.headers.common['Authorization'];
       setUser(null);
       toast.success('Logged out');
