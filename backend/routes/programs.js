@@ -166,7 +166,7 @@ router.get('/my-requirements', authenticate, async (req, res) => {
     
     res.json(user.programRequirements);
   } catch (error) {
-    logger.error(error);
+    logger.error('My requirements error: %o', error);
     res.status(500).json({ message: 'Server error' });
   }
 });
