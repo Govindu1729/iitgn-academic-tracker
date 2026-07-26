@@ -15,7 +15,7 @@ import analyticsRoutes from './routes/analytics.js';
 dotenv.config();
 
 const app = express();
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || 5001;
 
 // Fail fast if critical env vars are missing
 if (!process.env.JWT_SECRET) {
@@ -28,99 +28,223 @@ if (!process.env.MONGODB_URI) {
   process.exit(1);
 }
 
-// ✅ CORS Configuration
+// ==================== CORS CONFIGURATION ====================
 const allowedOrigins = [
   'https://iitgn-academic-tracker.vercel.app',
   'https://iitgn-academic-tracker-c4vs.vercel.app',
+  'https://iitgn-academic-tracker.vercel.app/',
+  'https://iitgn-academic-tracker-c4vs.vercel.app/',
   'http://localhost:3000',
-  'http://localhost:5173'
+  'http://localhost:3001',
+  'http://localhost:5173',
+  'http://localhost:5174',
+  'http://127.0.0.1:3000',
+  'http://127.0.0.1:5173',
+  'https://vercel.app',
+  '*.vercel.app'
 ];
 
-app.use(cors({
+// CORS options
+const corsOptions = {
   origin: function (origin, callback) {
-    if (!origin) return callback(null, true);
-    if (allowedOrigins.indexOf(origin) !== -1) {
+    // Allow requests with no origin (like mobile apps, curl, Postman)
+    if (!origin) {
+      return callback(null, true);
+    }
+    
+    // Check if origin is allowed
+    const isAllowed = allowedOrigins.some(allowed => {
+      // Check for wildcard pattern
+      if (allowed.includes('*')) {
+        const pattern = allowed.replace(/\*/g, '.*');
+        const regex = new RegExp(`^${pattern}$`);
+        return regex.test(origin);
+      }
+      return allowed === origin;
+    });
+    
+    if (isAllowed) {
       callback(null, true);
     } else {
-      logger.warn('Blocked origin: %s', origin);
-      callback(new Error('Not allowed by CORS'));
+      logger.warn('CORS blocked origin: %s', origin);
+      // For development, you can still allow it but log it
+      // In production, you'd want to reject it
+      if (process.env.NODE_ENV === 'development') {
+        callback(null, true);
+      } else {
+        callback(new Error('Not allowed by CORS'));
+      }
     }
   },
   credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization']
-}));
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS', 'HEAD'],
+  allowedHeaders: [
+    'Content-Type',
+    'Authorization',
+    'X-Requested-With',
+    'Accept',
+    'Origin',
+    'Access-Control-Allow-Origin',
+    'Access-Control-Allow-Headers',
+    'Access-Control-Allow-Methods',
+    'Access-Control-Allow-Credentials'
+  ],
+  exposedHeaders: ['Content-Disposition', 'Content-Length'],
+  maxAge: 86400 // 24 hours
+};
 
-// Handle preflight requests
-app.options('*', cors());
+// Apply CORS middleware
+app.use(cors(corsOptions));
 
+// Handle preflight requests explicitly
+app.options('*', cors(corsOptions));
+
+// ==================== MIDDLEWARE ====================
 // Security headers
-app.use(helmet());
+app.use(helmet({
+  crossOriginResourcePolicy: { policy: "cross-origin" },
+  crossOriginOpenerPolicy: { policy: "unsafe-none" }
+}));
 
 // Parse cookies for refresh-token support
 app.use(cookieParser());
 
+// Body parser
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+
+// ==================== RATE LIMITING ====================
 // Global rate limiter
 const globalLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
-  max: 200,
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 200, // limit each IP to 200 requests per windowMs
   standardHeaders: true,
-  legacyHeaders: false
+  legacyHeaders: false,
+  handler: (req, res) => {
+    logger.warn('Rate limit exceeded for IP: %s', req.ip);
+    res.status(429).json({ 
+      message: 'Too many requests, please try again later.' 
+    });
+  }
 });
 app.use(globalLimiter);
 
-// Middleware
-app.use(express.json());
-
-// ==================== ROUTES ====================
 // Stricter limiter for auth endpoints
 const authLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
-  max: 200,
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 10, // limit each IP to 10 requests per windowMs
   standardHeaders: true,
-  legacyHeaders: false
+  legacyHeaders: false,
+  handler: (req, res) => {
+    logger.warn('Auth rate limit exceeded for IP: %s', req.ip);
+    res.status(429).json({ 
+      message: 'Too many authentication attempts, please try again later.' 
+    });
+  }
 });
 
-// ✅ Verify each route is imported correctly
-console.log('✅ authRoutes:', typeof authRoutes, authRoutes ? 'loaded' : 'missing');
-console.log('✅ courseRoutes:', typeof courseRoutes, courseRoutes ? 'loaded' : 'missing');
-console.log('✅ programRoutes:', typeof programRoutes, programRoutes ? 'loaded' : 'missing');
-console.log('✅ analyticsRoutes:', typeof analyticsRoutes, analyticsRoutes ? 'loaded' : 'missing');
+// ==================== REQUEST LOGGING ====================
+// Log all requests in development
+if (process.env.NODE_ENV === 'development') {
+  app.use((req, res, next) => {
+    logger.debug('%s %s from %s', req.method, req.path, req.ip);
+    next();
+  });
+}
 
-// Register routes - each should be a router object
+// ==================== ROUTES ====================
+// Health check
+app.get('/api/health', (req, res) => {
+  res.json({ 
+    status: 'OK', 
+    message: 'Server is running',
+    timestamp: new Date().toISOString(),
+    environment: process.env.NODE_ENV || 'development'
+  });
+});
+
+// API Routes
 app.use('/api/auth', authLimiter, authRoutes);
 app.use('/api/courses', courseRoutes);
 app.use('/api/programs', programRoutes);
 app.use('/api/analytics', analyticsRoutes);
 
-// Test route
-app.get('/api/health', (req, res) => {
-  res.json({ status: 'OK', message: 'Server is running' });
+// ==================== ERROR HANDLING ====================
+// 404 handler
+app.use((req, res) => {
+  logger.warn('404 Not Found: %s %s', req.method, req.path);
+  res.status(404).json({ 
+    message: 'Route not found',
+    path: req.path,
+    method: req.method
+  });
 });
 
-// ==================== MongoDB Connection ====================
-// mongoose.connect(process.env.MONGODB_URI, {
-//   useNewUrlParser: true,
-//   useUnifiedTopology: true
-// })
-//   .then(() => {
-//     logger.info('Connected to MongoDB');
-//     app.listen(PORT, () => logger.info('Server running on port %s', PORT));
-//   })
-//   .catch(err => {
-//     logger.error('MongoDB connection error: %o', err);
-//     process.exit(1);
-//   });
+// Global error handler
+app.use((err, req, res, next) => {
+  logger.error('Unhandled error: %o', err);
+  
+  // Handle CORS errors
+  if (err.message === 'Not allowed by CORS') {
+    return res.status(403).json({ 
+      message: 'CORS error: Origin not allowed',
+      origin: req.headers.origin
+    });
+  }
+  
+  // Handle validation errors
+  if (err.name === 'ValidationError') {
+    return res.status(400).json({ 
+      message: 'Validation error',
+      errors: Object.values(err.errors).map(e => e.message)
+    });
+  }
+  
+  // Handle duplicate key errors
+  if (err.code === 11000) {
+    return res.status(409).json({ 
+      message: 'Duplicate key error',
+      field: Object.keys(err.keyPattern)[0]
+    });
+  }
+  
+  // Default error
+  res.status(500).json({ 
+    message: 'Internal server error',
+    error: process.env.NODE_ENV === 'development' ? err.message : undefined
+  });
+});
 
-// backend/server.js - Update the mongoose connection
+// ==================== DATABASE CONNECTION ====================
 mongoose.connect(process.env.MONGODB_URI)
   .then(() => {
     logger.info('Connected to MongoDB');
-    app.listen(PORT, () => logger.info('Server running on port %s', PORT));
+    app.listen(PORT, () => {
+      logger.info('Server running on port %s', PORT);
+      logger.info('Environment: %s', process.env.NODE_ENV || 'development');
+      logger.info('CORS allowed origins: %s', allowedOrigins.join(', '));
+    });
   })
   .catch(err => {
     logger.error('MongoDB connection error: %o', err);
     process.exit(1);
   });
 
-  
+// Handle graceful shutdown
+process.on('SIGTERM', () => {
+  logger.info('SIGTERM received, closing server...');
+  mongoose.connection.close(() => {
+    logger.info('MongoDB connection closed');
+    process.exit(0);
+  });
+});
+
+process.on('SIGINT', () => {
+  logger.info('SIGINT received, closing server...');
+  mongoose.connection.close(() => {
+    logger.info('MongoDB connection closed');
+    process.exit(0);
+  });
+});
+
+export default app;
