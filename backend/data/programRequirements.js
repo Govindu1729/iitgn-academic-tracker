@@ -276,7 +276,7 @@ const PROGRAM_TYPES = {
     semesters: 12,
     maxDuration: 12,
     openElectiveReduction: 4,
-    additionalCredits: 'dynamic', // Calculated based on secondary discipline
+    additionalCredits: 'dynamic',
     eligibility: { minCPI: 6.5, minSemester: 3, maxSemester: 6, noFailGrades: true }
   },
   DualDegree: {
@@ -335,7 +335,15 @@ function calculateDualMajorCredits(primaryDiscipline, secondaryDiscipline) {
   const primary = DISCIPLINE_BASE[primaryDiscipline];
   const secondary = DISCIPLINE_BASE[secondaryDiscipline];
   
-  if (!primary || !secondary) return { additionalCredits: 0, commonCredits: 0, secondaryCoreCredits: 0 };
+  if (!primary || !secondary) {
+    return { 
+      additionalCredits: 0, 
+      commonCredits: 0, 
+      secondaryCoreCredits: 0,
+      commonCourses: [],
+      secondaryCoreCourses: []
+    };
+  }
   
   // Find common core courses
   const commonCourses = findCommonCoreCourses(primaryDiscipline, secondaryDiscipline);
@@ -345,8 +353,6 @@ function calculateDualMajorCredits(primaryDiscipline, secondaryDiscipline) {
   const secondaryCoreCredits = calculateCourseCredits(secondary.disciplineCoreCourses);
   
   // Additional credits needed (minimum 28 credits from secondary discipline)
-  // If secondary discipline has core courses worth more than 28 credits, student must do all
-  // If less than 28, they need additional courses to meet 28 credit minimum
   const additionalNeeded = Math.max(28, secondaryCoreCredits);
   
   return {
@@ -361,7 +367,7 @@ function calculateDualMajorCredits(primaryDiscipline, secondaryDiscipline) {
 /**
  * Generate complete program requirements
  */
-export function generateProgramRequirements(primaryDiscipline, programType, secondaryDiscipline = null) {
+function generateProgramRequirements(primaryDiscipline, programType, secondaryDiscipline = null) {
   const primary = DISCIPLINE_BASE[primaryDiscipline];
   if (!primary) throw new Error(`Discipline ${primaryDiscipline} not found`);
   
@@ -405,7 +411,7 @@ export function generateProgramRequirements(primaryDiscipline, programType, seco
     };
   }
   else if (programType === 'DualDegree' || programType === 'MScDual') {
-    totalCredits = primary.totalCredits + 72; // 72 additional credits for MTech/MSc component
+    totalCredits = primary.totalCredits + 72;
     if (secondaryDiscipline) {
       const secondary = DISCIPLINE_BASE[secondaryDiscipline];
       if (secondary) {
@@ -419,7 +425,6 @@ export function generateProgramRequirements(primaryDiscipline, programType, seco
   }
   
   // Build basket requirements
-  // Start with primary discipline baskets
   const baskets = JSON.parse(JSON.stringify(primary.basketRequirements));
   
   // Adjust open elective
@@ -443,7 +448,6 @@ export function generateProgramRequirements(primaryDiscipline, programType, seco
         commonCourses: dualInfo.commonCourses
       });
       
-      // Also add secondary discipline as a basket requirement
       requirements.additionalInfo.secondaryDisciplineName = secondary.name;
     }
   }
@@ -471,7 +475,6 @@ export function generateProgramRequirements(primaryDiscipline, programType, seco
       isMandatory: true,
       isMTech: true
     });
-    // For MSc, the remaining 52 credits come from courses
     baskets.push({
       basketName: 'MSc Coursework',
       minCredits: 52,
@@ -491,7 +494,7 @@ export function generateProgramRequirements(primaryDiscipline, programType, seco
 /**
  * Get all available disciplines with their details
  */
-export const getDisciplines = () => {
+function getDisciplines() {
   return Object.keys(DISCIPLINE_BASE).map(key => ({
     code: key,
     name: DISCIPLINE_BASE[key].name,
@@ -499,12 +502,12 @@ export const getDisciplines = () => {
     disciplineCoreCredits: DISCIPLINE_BASE[key].disciplineCoreCredits,
     disciplineCoreCourses: DISCIPLINE_BASE[key].disciplineCoreCourses
   }));
-};
+}
 
 /**
  * Get program types
  */
-export const getProgramTypes = () => {
+function getProgramTypes() {
   return Object.keys(PROGRAM_TYPES).map(key => ({
     code: key,
     label: PROGRAM_TYPES[key].label,
@@ -512,12 +515,12 @@ export const getProgramTypes = () => {
     additionalCredits: PROGRAM_TYPES[key].additionalCredits,
     eligibility: PROGRAM_TYPES[key].eligibility
   }));
-};
+}
 
 /**
  * Get applicable program types for a user
  */
-export const getApplicableProgramTypes = (discipline, userCPI = 0, currentSemester = 1, hasFailGrades = false) => {
+function getApplicableProgramTypes(discipline, userCPI = 0, currentSemester = 1, hasFailGrades = false) {
   const types = [];
   const base = DISCIPLINE_BASE[discipline];
   if (!base) return types;
@@ -599,18 +602,33 @@ export const getApplicableProgramTypes = (discipline, userCPI = 0, currentSemest
   });
   
   return types;
+}
+
+// ==================== EXPORTS ====================
+// Export all functions and constants
+export {
+  DISCIPLINE_BASE,
+  COURSE_CREDITS,
+  PROGRAM_TYPES,
+  calculateCourseCredits,
+  findCommonCoreCourses,
+  calculateDualMajorCredits,
+  generateProgramRequirements,
+  getDisciplines,
+  getProgramTypes,
+  getApplicableProgramTypes
 };
 
 // Default export for backward compatibility
 export default {
+  DISCIPLINE_BASE,
+  COURSE_CREDITS,
+  PROGRAM_TYPES,
+  calculateCourseCredits,
+  findCommonCoreCourses,
+  calculateDualMajorCredits,
   generateProgramRequirements,
   getDisciplines,
   getProgramTypes,
-  getApplicableProgramTypes,
-  DISCIPLINE_BASE,
-  PROGRAM_TYPES,
-  COURSE_CREDITS,
-  findCommonCoreCourses,
-  calculateDualMajorCredits,
-  calculateCourseCredits
+  getApplicableProgramTypes
 };
