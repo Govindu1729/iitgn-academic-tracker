@@ -99,10 +99,21 @@ app.get('/api/health', (req, res) => {
 });
 
 // ==================== MongoDB Connection ====================
-mongoose.connect(process.env.MONGODB_URI, {
-  useNewUrlParser: true,
-  useUnifiedTopology: true
-})
+// mongoose.connect(process.env.MONGODB_URI, {
+//   useNewUrlParser: true,
+//   useUnifiedTopology: true
+// })
+//   .then(() => {
+//     logger.info('Connected to MongoDB');
+//     app.listen(PORT, () => logger.info('Server running on port %s', PORT));
+//   })
+//   .catch(err => {
+//     logger.error('MongoDB connection error: %o', err);
+//     process.exit(1);
+//   });
+
+// backend/server.js - Update the mongoose connection
+mongoose.connect(process.env.MONGODB_URI)
   .then(() => {
     logger.info('Connected to MongoDB');
     app.listen(PORT, () => logger.info('Server running on port %s', PORT));
@@ -111,6 +122,5 @@ mongoose.connect(process.env.MONGODB_URI, {
     logger.error('MongoDB connection error: %o', err);
     process.exit(1);
   });
-
 
   

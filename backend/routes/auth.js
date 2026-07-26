@@ -26,7 +26,7 @@ function createRefreshToken(userId) {
   return jwt.sign({ userId }, process.env.JWT_SECRET, { expiresIn: REFRESH_EXPIRES });
 }
 
-// Signup
+// ==================== SIGNUP ====================
 router.post('/signup', [
   body('email').isEmail().withMessage('Invalid email'),
   body('password').isLength({ min: 6 }).withMessage('Password must be at least 6 characters')
@@ -36,7 +36,19 @@ router.post('/signup', [
     if (!errors.isEmpty()) {
       return res.status(400).json({ errors: errors.array() });
     }
-    const { email, password, program, admissionYear, pursuingHonours, pursuingMinor, minorDiscipline } = req.body;
+    
+    const { 
+      email, 
+      password, 
+      primaryDiscipline = 'CSE',
+      programType = 'BTech',
+      secondaryDiscipline = '',
+      admissionYear = 2026,
+      pursuingHonours = false, 
+      pursuingMinor = false, 
+      minorDiscipline = '',
+      currentSemester = 1
+    } = req.body;
     
     const existingUser = await User.findOne({ email });
     if (existingUser) {
@@ -45,22 +57,36 @@ router.post('/signup', [
 
     const user = new User({ 
       email, 
-      password, 
-      program: program || 'BTech_CSE',
-      admissionYear: admissionYear || 2026,
-      pursuingHonours: pursuingHonours || false,
-      pursuingMinor: pursuingMinor || false,
-      minorDiscipline: minorDiscipline || ''
+      password,
+      primaryDiscipline,
+      programType,
+      secondaryDiscipline,
+      admissionYear,
+      currentSemester,
+      pursuingHonours,
+      pursuingMinor,
+      minorDiscipline
     });
     await user.save();
+
+    // Generate program requirements
+    try {
+      const { generateProgramRequirements } = await import('../data/programRequirements.js');
+      user.programRequirements = generateProgramRequirements(
+        primaryDiscipline,
+        programType,
+        secondaryDiscipline || null
+      );
+      await user.save();
+    } catch (err) {
+      logger.warn('Could not generate program requirements: %o', err);
+    }
 
     // Create tokens
     const accessToken = createAccessToken(user._id);
     const refreshToken = createRefreshToken(user._id);
-    // store refresh token
     user.refreshTokens.push(refreshToken);
     await user.save();
-    // set HttpOnly cookie
     res.cookie(REFRESH_COOKIE_NAME, refreshToken, refreshCookieOptions);
 
     res.status(201).json({ 
@@ -68,20 +94,25 @@ router.post('/signup', [
       user: { 
         id: user._id, 
         email: user.email,
-        program: user.program,
+        primaryDiscipline: user.primaryDiscipline,
+        programType: user.programType,
+        secondaryDiscipline: user.secondaryDiscipline || '',
+        programName: user.programName,
         admissionYear: user.admissionYear,
+        currentSemester: user.currentSemester,
         pursuingHonours: user.pursuingHonours,
         pursuingMinor: user.pursuingMinor,
-        minorDiscipline: user.minorDiscipline
+        minorDiscipline: user.minorDiscipline || '',
+        programRequirements: user.programRequirements
       } 
     });
   } catch (error) {
-    logger.error(error);
+    logger.error('Signup error: %o', error);
     res.status(500).json({ message: 'Server error' });
   }
 });
 
-// Login
+// ==================== LOGIN ====================
 router.post('/login', [
   body('email').isEmail().withMessage('Invalid email'),
   body('password').exists().withMessage('Password is required')
@@ -91,6 +122,7 @@ router.post('/login', [
     if (!errors.isEmpty()) {
       return res.status(400).json({ errors: errors.array() });
     }
+    
     const { email, password } = req.body;
     
     const user = await User.findOne({ email });
@@ -103,10 +135,24 @@ router.post('/login', [
       return res.status(400).json({ message: 'Invalid credentials' });
     }
 
-    // generate tokens
+    // Generate program requirements if not present
+    if (!user.programRequirements) {
+      try {
+        const { generateProgramRequirements } = await import('../data/programRequirements.js');
+        user.programRequirements = generateProgramRequirements(
+          user.primaryDiscipline || 'CSE',
+          user.programType || 'BTech',
+          user.secondaryDiscipline || null
+        );
+        await user.save();
+      } catch (err) {
+        logger.warn('Could not generate program requirements: %o', err);
+      }
+    }
+
+    // Generate tokens
     const accessToken = createAccessToken(user._id);
     const refreshToken = createRefreshToken(user._id);
-    // store refresh token
     user.refreshTokens.push(refreshToken);
     await user.save();
     res.cookie(REFRESH_COOKIE_NAME, refreshToken, refreshCookieOptions);
@@ -116,11 +162,16 @@ router.post('/login', [
       user: { 
         id: user._id, 
         email: user.email,
-        program: user.program,
+        primaryDiscipline: user.primaryDiscipline || 'CSE',
+        programType: user.programType || 'BTech',
+        secondaryDiscipline: user.secondaryDiscipline || '',
+        programName: user.programName,
         admissionYear: user.admissionYear,
-        pursuingHonours: user.pursuingHonours,
-        pursuingMinor: user.pursuingMinor,
-        minorDiscipline: user.minorDiscipline
+        currentSemester: user.currentSemester || 1,
+        pursuingHonours: user.pursuingHonours || false,
+        pursuingMinor: user.pursuingMinor || false,
+        minorDiscipline: user.minorDiscipline || '',
+        programRequirements: user.programRequirements
       } 
     });
   } catch (error) {
@@ -129,7 +180,7 @@ router.post('/login', [
   }
 });
 
-// Refresh access token
+// ==================== REFRESH TOKEN ====================
 router.post('/refresh', async (req, res) => {
   try {
     const token = req.cookies[REFRESH_COOKIE_NAME];
@@ -145,12 +196,10 @@ router.post('/refresh', async (req, res) => {
     const user = await User.findById(decoded.userId);
     if (!user) return res.status(401).json({ message: 'User not found' });
 
-    // check token exists (rotation)
     if (!user.refreshTokens.includes(token)) {
       return res.status(401).json({ message: 'Refresh token revoked' });
     }
 
-    // rotate tokens: remove old, add new
     const newAccessToken = createAccessToken(user._id);
     const newRefreshToken = createRefreshToken(user._id);
 
@@ -159,22 +208,30 @@ router.post('/refresh', async (req, res) => {
     await user.save();
 
     res.cookie(REFRESH_COOKIE_NAME, newRefreshToken, refreshCookieOptions);
-    res.json({ accessToken: newAccessToken, user: {
-      id: user._id,
-      email: user.email,
-      program: user.program,
-      admissionYear: user.admissionYear,
-      pursuingHonours: user.pursuingHonours,
-      pursuingMinor: user.pursuingMinor,
-      minorDiscipline: user.minorDiscipline
-    }});
+    res.json({ 
+      accessToken: newAccessToken, 
+      user: {
+        id: user._id,
+        email: user.email,
+        primaryDiscipline: user.primaryDiscipline || 'CSE',
+        programType: user.programType || 'BTech',
+        secondaryDiscipline: user.secondaryDiscipline || '',
+        programName: user.programName,
+        admissionYear: user.admissionYear,
+        currentSemester: user.currentSemester || 1,
+        pursuingHonours: user.pursuingHonours || false,
+        pursuingMinor: user.pursuingMinor || false,
+        minorDiscipline: user.minorDiscipline || '',
+        programRequirements: user.programRequirements
+      }
+    });
   } catch (error) {
     logger.error('Refresh error: %o', error);
     res.status(500).json({ message: 'Server error' });
   }
 });
 
-// Logout - invalidate refresh token
+// ==================== LOGOUT ====================
 router.post('/logout', async (req, res) => {
   try {
     const token = req.cookies[REFRESH_COOKIE_NAME];
@@ -198,20 +255,48 @@ router.post('/logout', async (req, res) => {
   }
 });
 
-// Update profile (protected route)
+// ==================== UPDATE PROFILE ====================
 router.put('/profile', authenticate, async (req, res) => {
   try {
-    const { program, pursuingHonours, pursuingMinor, minorDiscipline } = req.body;
-    const user = await User.findById(req.userId);
+    const { 
+      primaryDiscipline,
+      programType,
+      secondaryDiscipline,
+      pursuingHonours, 
+      pursuingMinor, 
+      minorDiscipline,
+      currentSemester,
+      profilePicture
+    } = req.body;
     
+    const user = await User.findById(req.userId);
     if (!user) {
       return res.status(404).json({ message: 'User not found' });
     }
     
-    if (program !== undefined) user.program = program;
+    // Update fields
+    if (primaryDiscipline !== undefined) user.primaryDiscipline = primaryDiscipline;
+    if (programType !== undefined) user.programType = programType;
+    if (secondaryDiscipline !== undefined) user.secondaryDiscipline = secondaryDiscipline;
     if (pursuingHonours !== undefined) user.pursuingHonours = pursuingHonours;
     if (pursuingMinor !== undefined) user.pursuingMinor = pursuingMinor;
     if (minorDiscipline !== undefined) user.minorDiscipline = minorDiscipline;
+    if (currentSemester !== undefined) user.currentSemester = currentSemester;
+    if (profilePicture !== undefined) user.profilePicture = profilePicture;
+    
+    // Regenerate program requirements if program changed
+    if (primaryDiscipline !== undefined || programType !== undefined || secondaryDiscipline !== undefined) {
+      try {
+        const { generateProgramRequirements } = await import('../data/programRequirements.js');
+        user.programRequirements = generateProgramRequirements(
+          user.primaryDiscipline || 'CSE',
+          user.programType || 'BTech',
+          user.secondaryDiscipline || null
+        );
+      } catch (err) {
+        logger.warn('Could not regenerate program requirements: %o', err);
+      }
+    }
     
     await user.save();
     
@@ -219,15 +304,52 @@ router.put('/profile', authenticate, async (req, res) => {
       user: { 
         id: user._id, 
         email: user.email,
-        program: user.program,
+        primaryDiscipline: user.primaryDiscipline,
+        programType: user.programType,
+        secondaryDiscipline: user.secondaryDiscipline || '',
+        programName: user.programName,
         admissionYear: user.admissionYear,
+        currentSemester: user.currentSemester,
         pursuingHonours: user.pursuingHonours,
         pursuingMinor: user.pursuingMinor,
-        minorDiscipline: user.minorDiscipline
+        minorDiscipline: user.minorDiscipline || '',
+        profilePicture: user.profilePicture || '',
+        programRequirements: user.programRequirements
       } 
     });
   } catch (error) {
-    logger.error(error);
+    logger.error('Profile update error: %o', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// ==================== GET USER PROFILE ====================
+router.get('/profile', authenticate, async (req, res) => {
+  try {
+    const user = await User.findById(req.userId);
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+    
+    res.json({
+      user: {
+        id: user._id,
+        email: user.email,
+        primaryDiscipline: user.primaryDiscipline || 'CSE',
+        programType: user.programType || 'BTech',
+        secondaryDiscipline: user.secondaryDiscipline || '',
+        programName: user.programName,
+        admissionYear: user.admissionYear,
+        currentSemester: user.currentSemester || 1,
+        pursuingHonours: user.pursuingHonours || false,
+        pursuingMinor: user.pursuingMinor || false,
+        minorDiscipline: user.minorDiscipline || '',
+        profilePicture: user.profilePicture || '',
+        programRequirements: user.programRequirements
+      }
+    });
+  } catch (error) {
+    logger.error('Profile fetch error: %o', error);
     res.status(500).json({ message: 'Server error' });
   }
 });
