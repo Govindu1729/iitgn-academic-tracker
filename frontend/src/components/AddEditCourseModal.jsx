@@ -133,8 +133,8 @@ export default function AddEditCourseModal({ isOpen, onClose, onSubmit, course =
               <label htmlFor="academic-year-select" className="block text-sm font-medium mb-1">Academic Year</label>
               <select id="academic-year-select" value={formData.academicYear} onChange={(e) => setFormData({ ...formData, academicYear: e.target.value })}
                 className="w-full px-3 py-2 border rounded-lg text-sm">
-                <option>2024-25</option><option>2025-26</option><option>2026-27</option>
-                <option>2027-28</option><option>2028-29</option>
+                <option>2022-23</option><option>2023-24</option><option>2024-25</option><option>2025-26</option><option>2026-27</option>
+                <option>2027-28</option><option>2028-29</option><option>2029-30</option>
               </select>
             </div>
           </div>
