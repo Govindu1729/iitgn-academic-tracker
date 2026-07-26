@@ -76,7 +76,7 @@ app.use(express.json());
 // Stricter limiter for auth endpoints
 const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: 10,
+  max: 200,
   standardHeaders: true,
   legacyHeaders: false
 });
@@ -111,3 +111,6 @@ mongoose.connect(process.env.MONGODB_URI, {
     logger.error('MongoDB connection error: %o', err);
     process.exit(1);
   });
+
+
+  
