@@ -8,6 +8,7 @@ const basketOptions = [
   'General Education', 'Discipline Core', 'Discipline Elective', 'Open Elective', 'Project'
 ];
 
+
 export default function AddEditCourseModal({ isOpen, onClose, onSubmit, course = null }) {
   const [formData, setFormData] = useState({
     courseCode: '', courseName: '', credits: 3, grade: '', semester: 'I',

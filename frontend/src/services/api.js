@@ -30,15 +30,25 @@ export const courseAPI = {
   exportCourses: () => api.get('/courses/export', { responseType: 'blob' })
 };
 
+// frontend/src/services/api.js - Add to existing file
+
+export const programAPI = {
+  getRequirements: (programCode) => api.get(`/programs/requirements/${programCode}`),
+  getPrograms: () => api.get('/programs/list'),
+  // ✅ New methods
+  getDisciplines: () => api.get('/programs/disciplines'),
+  getProgramTypes: () => api.get('/programs/program-types'),
+  getApplicablePrograms: () => api.get('/programs/applicable-programs'),
+  generateRequirements: (data) => api.post('/programs/generate-requirements', data),
+  getMyRequirements: () => api.get('/programs/my-requirements'),
+  getDualMajorPreview: (data) => api.post('/programs/dual-major-preview', data)
+};
+
 export const analyticsAPI = {
   getGPA: () => api.get('/analytics/gpa'),
   getBasketSummary: () => api.get('/analytics/basket-summary'),
   getProgressAnalysis: () => api.get('/analytics/progress-analysis')
 };
 
-export const programAPI = {
-  getRequirements: (programCode) => api.get(`/programs/requirements/${programCode}`),
-  getPrograms: () => api.get('/programs/list')
-};
 
 export default api;

@@ -10,7 +10,7 @@ const basketOptions = [
 ];
 
 const semesterOptions = ['I', 'II', 'Summer'];
-const academicYearOptions = ['2024-25', '2025-26', '2026-27', '2027-28', '2028-29'];
+const academicYearOptions = ['2022-23','2023-24','2024-25', '2025-26', '2026-27', '2027-28', '2028-29','2029-30'];
 
 export default function AddEditPlannedModal({ isOpen, onClose, onSubmit, course = null }) {
   const [formData, setFormData] = useState({
