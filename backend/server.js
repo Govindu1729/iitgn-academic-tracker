@@ -117,7 +117,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 // Global rate limiter
 const globalLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 200, // limit each IP to 200 requests per windowMs
+  max: 300, // limit each IP to 200 requests per windowMs
   standardHeaders: true,
   legacyHeaders: false,
   handler: (req, res) => {
@@ -132,7 +132,7 @@ app.use(globalLimiter);
 // Stricter limiter for auth endpoints
 const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 100, // limit each IP to 10 requests per windowMs
+  max: 300, // limit each IP to 10 requests per windowMs
   standardHeaders: true,
   legacyHeaders: false,
   handler: (req, res) => {
