@@ -1,3 +1,4 @@
+// backend/server.js
 import express from 'express';
 import mongoose from 'mongoose';
 import cors from 'cors';
@@ -27,7 +28,7 @@ if (!process.env.MONGODB_URI) {
   process.exit(1);
 }
 
-// ✅ FIXED CORS Configuration
+// ✅ CORS Configuration
 const allowedOrigins = [
   'https://iitgn-academic-tracker.vercel.app',
   'https://iitgn-academic-tracker-c4vs.vercel.app',
@@ -37,7 +38,6 @@ const allowedOrigins = [
 
 app.use(cors({
   origin: function (origin, callback) {
-    // Allow requests with no origin (like mobile apps or curl requests)
     if (!origin) return callback(null, true);
     if (allowedOrigins.indexOf(origin) !== -1) {
       callback(null, true);
@@ -57,13 +57,13 @@ app.options('*', cors());
 // Security headers
 app.use(helmet());
 
-// Parse cookies for future refresh-token support
+// Parse cookies for refresh-token support
 app.use(cookieParser());
 
-// Global rate limiter (conservative)
+// Global rate limiter
 const globalLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 200, // limit each IP to 200 requests per windowMs
+  windowMs: 15 * 60 * 1000,
+  max: 200,
   standardHeaders: true,
   legacyHeaders: false
 });
@@ -72,15 +72,22 @@ app.use(globalLimiter);
 // Middleware
 app.use(express.json());
 
-// Routes
+// ==================== ROUTES ====================
 // Stricter limiter for auth endpoints
 const authLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 10, // limit each IP to 10 requests per windowMs
+  windowMs: 15 * 60 * 1000,
+  max: 10,
   standardHeaders: true,
   legacyHeaders: false
 });
 
+// ✅ Verify each route is imported correctly
+console.log('✅ authRoutes:', typeof authRoutes, authRoutes ? 'loaded' : 'missing');
+console.log('✅ courseRoutes:', typeof courseRoutes, courseRoutes ? 'loaded' : 'missing');
+console.log('✅ programRoutes:', typeof programRoutes, programRoutes ? 'loaded' : 'missing');
+console.log('✅ analyticsRoutes:', typeof analyticsRoutes, analyticsRoutes ? 'loaded' : 'missing');
+
+// Register routes - each should be a router object
 app.use('/api/auth', authLimiter, authRoutes);
 app.use('/api/courses', courseRoutes);
 app.use('/api/programs', programRoutes);
@@ -91,9 +98,8 @@ app.get('/api/health', (req, res) => {
   res.json({ status: 'OK', message: 'Server is running' });
 });
 
-// MongoDB Connection
+// ==================== MongoDB Connection ====================
 mongoose.connect(process.env.MONGODB_URI, {
-  // explicit options for compatibility
   useNewUrlParser: true,
   useUnifiedTopology: true
 })
