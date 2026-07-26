@@ -177,7 +177,7 @@ router.post('/dual-major-preview', authenticate, async (req, res) => {
     const { primaryDiscipline, secondaryDiscipline } = req.body;
     
     if (!primaryDiscipline || !secondaryDiscipline) {
-      return res.status(400).json({ message: 'Both disciplines required' });
+      return res.status(400).json({ message: 'Both disciplines are required' });
     }
     
     const dualInfo = calculateDualMajorCredits(primaryDiscipline, secondaryDiscipline);
@@ -188,6 +188,8 @@ router.post('/dual-major-preview', authenticate, async (req, res) => {
       return res.status(404).json({ message: 'Discipline not found' });
     }
     
+    const totalCreditsRequired = primary.totalCredits + dualInfo.additionalCredits;
+    
     res.json({
       primaryDiscipline: primary.name,
       secondaryDiscipline: secondary.name,
@@ -196,15 +198,70 @@ router.post('/dual-major-preview', authenticate, async (req, res) => {
       commonCoreCredits: dualInfo.commonCredits,
       commonCourses: dualInfo.commonCourses,
       additionalCreditsNeeded: dualInfo.additionalCredits,
-      totalCreditsRequired: primary.totalCredits + dualInfo.additionalCredits,
+      totalCreditsRequired: totalCreditsRequired,
       secondaryCoreCourses: dualInfo.secondaryCoreCourses,
       breakdown: {
         'Primary Discipline Total': primary.totalCredits,
         'Secondary Core Courses': dualInfo.secondaryCoreCredits,
         'Less: Common Courses': -dualInfo.commonCredits,
         'Additional Credits Required': dualInfo.additionalCredits,
-        'Final Total': primary.totalCredits + dualInfo.additionalCredits
-      }
+        'Final Total Credits': totalCreditsRequired
+      },
+      summary: `${secondary.name} has ${dualInfo.secondaryCoreCredits} credits of core courses. ` +
+               `${dualInfo.commonCredits} credits are common with ${primary.name}. ` +
+               `You need ${dualInfo.additionalCredits} additional credits for Dual Major. ` +
+               `Total credits required: ${totalCreditsRequired}`
+    });
+  } catch (error) {
+    logger.error('Dual major preview error: %o', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// Get course catalog with credits
+router.get('/course-credits', async (req, res) => {
+  try {
+    const { COURSE_CREDITS } = await import('../data/programRequirements.js');
+    res.json(COURSE_CREDITS);
+  } catch (error) {
+    logger.error(error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// Get common courses between two disciplines
+router.post('/common-courses', authenticate, async (req, res) => {
+  try {
+    const { primaryDiscipline, secondaryDiscipline } = req.body;
+    
+    if (!primaryDiscipline || !secondaryDiscipline) {
+      return res.status(400).json({ message: 'Both disciplines are required' });
+    }
+    
+    const commonCourses = findCommonCoreCourses(primaryDiscipline, secondaryDiscipline);
+    const primary = DISCIPLINE_BASE[primaryDiscipline];
+    const secondary = DISCIPLINE_BASE[secondaryDiscipline];
+    
+    if (!primary || !secondary) {
+      return res.status(404).json({ message: 'Discipline not found' });
+    }
+    
+    // Get course details
+    const { COURSE_CREDITS } = await import('../data/programRequirements.js');
+    const courseDetails = commonCourses.map(code => ({
+      courseCode: code,
+      credits: COURSE_CREDITS[code] || 0
+    }));
+    
+    const totalCommonCredits = courseDetails.reduce((sum, c) => sum + c.credits, 0);
+    
+    res.json({
+      primaryDiscipline: primary.name,
+      secondaryDiscipline: secondary.name,
+      commonCourses: courseDetails,
+      totalCommonCredits: totalCommonCredits,
+      primaryCoreCourses: primary.disciplineCoreCourses,
+      secondaryCoreCourses: secondary.disciplineCoreCourses
     });
   } catch (error) {
     logger.error(error);
