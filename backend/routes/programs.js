@@ -49,8 +49,13 @@ router.get('/applicable-programs', authenticate, async (req, res) => {
     const Course = (await import('../models/Course.js')).default;
     const courses = await Course.find({ userId: req.userId, isPlanned: false });
     
-    let totalPoints = 0, totalCredits = 0;
-    const gradeMap = { 'A+': 10, 'A': 10, 'A-': 9, 'B': 8, 'B-': 7, 'C': 6, 'C-': 5, 'D': 4, 'F': 0 };
+    let totalPoints = 0;
+    let totalCredits = 0;
+    const gradeMap = { 
+      'A+': 10, 'A': 10, 'A-': 9, 'B': 8, 
+      'B-': 7, 'C': 6, 'C-': 5, 'D': 4, 'F': 0 
+    };
+    
     courses.forEach(c => {
       if (c.grade && gradeMap[c.grade] !== undefined) {
         totalPoints += gradeMap[c.grade] * c.credits;
@@ -82,14 +87,14 @@ router.get('/applicable-programs', authenticate, async (req, res) => {
         primaryDiscipline: user.primaryDiscipline || 'CSE',
         secondaryDiscipline: user.secondaryDiscipline || null
       },
-      cpi,
+      cpi: parseFloat(cpi.toFixed(2)),
       hasFailGrades,
       currentSemester,
       applicableTypes,
       disciplines
     });
   } catch (error) {
-    logger.error(error);
+    logger.error('Applicable programs error: %o', error);
     res.status(500).json({ message: 'Server error' });
   }
 });
