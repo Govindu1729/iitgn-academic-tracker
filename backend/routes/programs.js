@@ -104,6 +104,10 @@ router.post('/generate-requirements', authenticate, async (req, res) => {
   try {
     const { primaryDiscipline, programType, secondaryDiscipline } = req.body;
     
+    if (!primaryDiscipline || !programType) {
+      return res.status(400).json({ message: 'Primary discipline and program type are required' });
+    }
+    
     const requirements = generateProgramRequirements(
       primaryDiscipline,
       programType,
@@ -115,17 +119,28 @@ router.post('/generate-requirements', authenticate, async (req, res) => {
       const dualInfo = calculateDualMajorCredits(primaryDiscipline, secondaryDiscipline);
       requirements.dualMajorBreakdown = {
         ...dualInfo,
-        primaryDisciplineName: DISCIPLINE_BASE[primaryDiscipline]?.name,
-        secondaryDisciplineName: DISCIPLINE_BASE[secondaryDiscipline]?.name,
+        primaryDisciplineName: DISCIPLINE_BASE[primaryDiscipline]?.name || primaryDiscipline,
+        secondaryDisciplineName: DISCIPLINE_BASE[secondaryDiscipline]?.name || secondaryDiscipline,
         totalAdditionalCredits: dualInfo.additionalCredits,
-        coreCoursesToComplete: dualInfo.secondaryCoreCourses,
-        commonCoreCourses: dualInfo.commonCourses
+        coreCoursesToComplete: dualInfo.secondaryCoreCourses || [],
+        commonCoreCourses: dualInfo.commonCourses || []
+      };
+    }
+    
+    // If Dual Degree, add MTech details
+    if (programType === 'DualDegree' || programType === 'MScDual') {
+      requirements.mtechDetails = {
+        additionalCredits: 72,
+        courseCredits: 24,
+        thesisCredits: 32,
+        totalDuration: '7 years (14 semesters)',
+        fellowshipEligibility: 'CPI >= 8.0 or valid GATE score'
       };
     }
     
     res.json(requirements);
   } catch (error) {
-    logger.error(error);
+    logger.error('Generate requirements error: %o', error);
     res.status(400).json({ message: error.message });
   }
 });
