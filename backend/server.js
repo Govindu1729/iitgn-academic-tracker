@@ -164,7 +164,7 @@ app.get('/api/health', (req, res) => {
 });
 
 // API Routes
-//app.use('/api/auth', authLimiter, authRoutes);
+app.use('/api/auth', authRoutes);
 app.use('/api/courses', courseRoutes);
 app.use('/api/programs', programRoutes);
 app.use('/api/analytics', analyticsRoutes);
