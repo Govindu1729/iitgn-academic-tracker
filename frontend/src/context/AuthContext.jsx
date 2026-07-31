@@ -1,5 +1,5 @@
 // frontend/src/context/AuthContext.jsx
-import { createContext, useState, useContext, useEffect } from 'react';
+import { createContext, useState, useContext, useEffect, useRef } from 'react';
 import api from '../services/api';
 import toast from 'react-hot-toast';
 
@@ -10,41 +10,82 @@ export const useAuth = () => useContext(AuthContext);
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [authChecked, setAuthChecked] = useState(false);
+  const refreshAttempts = useRef(0);
+  const MAX_REFRESH_ATTEMPTS = 2;
 
   useEffect(() => {
-    // Try to refresh access token using HttpOnly refresh cookie
-    (async () => {
-      try {
-        const res = await api.post('/auth/refresh');
-        const { accessToken, user } = res.data;
-        if (accessToken) {
-          api.defaults.headers.common['Authorization'] = `Bearer ${accessToken}`;
-          localStorage.setItem('token', accessToken);
+    let isMounted = true;
+    let timeoutId = null;
+
+    const checkAuth = async () => {
+      // Prevent multiple rapid calls
+      if (refreshAttempts.current >= MAX_REFRESH_ATTEMPTS) {
+        if (isMounted) {
+          setLoading(false);
+          setAuthChecked(true);
         }
-        if (user) {
-          setUser(user);
-          try { localStorage.setItem('user', JSON.stringify(user)); } catch (e) {}
-        }
-      } catch (e) {
-        console.log('No active session');
-      } finally {
-        setLoading(false);
+        return;
       }
-    })();
+
+      try {
+        refreshAttempts.current += 1;
+        const res = await api.post('/auth/refresh', {}, { 
+          withCredentials: true,
+          timeout: 10000 // 10 second timeout
+        });
+        
+        if (isMounted && res.data) {
+          const { accessToken, user: userData } = res.data;
+          if (accessToken) {
+            api.defaults.headers.common['Authorization'] = `Bearer ${accessToken}`;
+            localStorage.setItem('token', accessToken);
+          }
+          if (userData) {
+            setUser(userData);
+            localStorage.setItem('user', JSON.stringify(userData));
+          }
+        }
+      } catch (error) {
+        // Silent fail - user is not authenticated
+        console.log('No active session or refresh failed:', error.message);
+        // Clear any stale data
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+        delete api.defaults.headers.common['Authorization'];
+      } finally {
+        if (isMounted) {
+          setLoading(false);
+          setAuthChecked(true);
+        }
+      }
+    };
+
+    // Small delay to prevent rapid re-renders
+    timeoutId = setTimeout(checkAuth, 100);
+
+    return () => {
+      isMounted = false;
+      if (timeoutId) clearTimeout(timeoutId);
+    };
   }, []);
 
   const login = async (email, password) => {
     try {
+      // Reset refresh attempts on new login
+      refreshAttempts.current = 0;
+      
       const res = await api.post('/auth/login', { email, password });
-      const { accessToken, user } = res.data;
+      const { accessToken, user: userData } = res.data;
       
       if (accessToken) {
         api.defaults.headers.common['Authorization'] = `Bearer ${accessToken}`;
         localStorage.setItem('token', accessToken);
       }
-      if (user) {
-        setUser(user);
-        localStorage.setItem('user', JSON.stringify(user));
+      if (userData) {
+        setUser(userData);
+        localStorage.setItem('user', JSON.stringify(userData));
+        setAuthChecked(true);
       }
       toast.success('Logged in successfully!');
       return true;
@@ -57,6 +98,8 @@ export const AuthProvider = ({ children }) => {
 
   const signup = async (email, password, program, admissionYear) => {
     try {
+      refreshAttempts.current = 0;
+      
       // Map old program codes to new discipline format
       const disciplineMap = {
         'BTech_CSE': 'CSE',
@@ -92,15 +135,16 @@ export const AuthProvider = ({ children }) => {
         minorDiscipline: ''
       });
       
-      const { accessToken, user } = res.data;
+      const { accessToken, user: userData } = res.data;
       
       if (accessToken) {
         api.defaults.headers.common['Authorization'] = `Bearer ${accessToken}`;
         localStorage.setItem('token', accessToken);
       }
-      if (user) {
-        setUser(user);
-        localStorage.setItem('user', JSON.stringify(user));
+      if (userData) {
+        setUser(userData);
+        localStorage.setItem('user', JSON.stringify(userData));
+        setAuthChecked(true);
       }
       toast.success('Account created successfully!');
       return true;
@@ -136,12 +180,31 @@ export const AuthProvider = ({ children }) => {
       localStorage.removeItem('token');
       delete api.defaults.headers.common['Authorization'];
       setUser(null);
+      setAuthChecked(false);
+      refreshAttempts.current = 0;
       toast.success('Logged out');
     })();
   };
 
+  // Don't render children until auth check is complete
+  if (!authChecked) {
+    return (
+      <div className="flex justify-center items-center min-h-screen">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+      </div>
+    );
+  }
+
   return (
-    <AuthContext.Provider value={{ user, loading, login, signup, updateProfile, logout }}>
+    <AuthContext.Provider value={{ 
+      user, 
+      loading, 
+      login, 
+      signup, 
+      updateProfile, 
+      logout,
+      isAuthenticated: !!user 
+    }}>
       {children}
     </AuthContext.Provider>
   );
