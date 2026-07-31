@@ -1,49 +1,55 @@
 // frontend/src/services/api.js
 import axios from 'axios';
 
-// Get the API URL from environment or use localhost
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001/api';
+// ==================== DYNAMIC API URL ====================
+const getBaseUrl = () => {
+  // 1. Priority: Use the environment variable
+  if (import.meta.env.VITE_API_URL) {
+    return import.meta.env.VITE_API_URL;
+  }
+  
+  // 2. Production: If on Vercel, use Render backend
+  if (typeof window !== 'undefined' && window.location.hostname.includes('vercel.app')) {
+    return 'https://iitgn-academic-tracker.onrender.com/api';
+  }
+  
+  // 3. Local development
+  return 'http://localhost:5001/api';
+};
 
-// Create axios instance with default config
+const API_URL = getBaseUrl();
+console.log(`[API] Using base URL: ${API_URL}`);
+
+// Create axios instance
 const api = axios.create({
   baseURL: API_URL,
   headers: {
     'Content-Type': 'application/json',
     'Accept': 'application/json'
   },
-  withCredentials: true, // Important for cookies
-  timeout: 30000 // 30 seconds timeout
+  withCredentials: true,
+  timeout: 30000
 });
 
-// Request interceptor - add token
+// Request interceptor
 api.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem('token');
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
-    
-    // Log request in development
-    if (import.meta.env.DEV) {
-      console.log(`[API] ${config.method.toUpperCase()} ${config.url}`, config.data || '');
-    }
-    
     return config;
   },
-  (error) => {
-    return Promise.reject(error);
-  }
+  (error) => Promise.reject(error)
 );
 
-// Response interceptor - handle errors
+// Response interceptor
 api.interceptors.response.use(
-  (response) => {
-    return response;
-  },
+  (response) => response,
   async (error) => {
     const originalRequest = error.config;
     
-    // Handle 401 Unauthorized - try refresh
+    // Handle 401 - try refresh once
     if (error.response?.status === 401 && !originalRequest._retry) {
       originalRequest._retry = true;
       
@@ -52,7 +58,7 @@ api.interceptors.response.use(
           withCredentials: true
         });
         
-        const { accessToken, user } = response.data;
+        const { accessToken } = response.data;
         if (accessToken) {
           localStorage.setItem('token', accessToken);
           api.defaults.headers.common['Authorization'] = `Bearer ${accessToken}`;
@@ -60,26 +66,15 @@ api.interceptors.response.use(
           return api(originalRequest);
         }
       } catch (refreshError) {
-        // Refresh failed - redirect to login
         localStorage.removeItem('token');
         localStorage.removeItem('user');
-        window.location.href = '/';
+        // Only redirect if not already on login page
+        if (window.location.pathname !== '/') {
+          window.location.href = '/';
+        }
         return Promise.reject(refreshError);
       }
     }
-    
-    // Handle CORS errors
-    if (error.message === 'Network Error') {
-      console.error('Network error - possible CORS issue:', error);
-      return Promise.reject({
-        message: 'Network error. Please check your connection and CORS settings.',
-        original: error
-      });
-    }
-    
-    // Handle other errors
-    const errorMessage = error.response?.data?.message || error.message || 'An error occurred';
-    console.error(`[API Error] ${errorMessage}`, error);
     
     return Promise.reject(error);
   }
