@@ -1,3 +1,4 @@
+// frontend/src/pages/DashboardPage.jsx
 import { useState, useEffect } from 'react';
 import { courseAPI, analyticsAPI, programAPI } from '../services/api';
 import { calculateCPI, calculateTotalCredits, getCreditsByBasket } from '../utils/gpaCalculator';
@@ -21,15 +22,37 @@ export default function DashboardPage() {
 
   const fetchData = async () => {
     try {
-      const [coursesRes, requirementsRes, gpaRes] = await Promise.all([
-        courseAPI.getAll(),
-        programAPI.getRequirements(user?.program || 'BTech_CSE'),
-        analyticsAPI.getGPA()
-      ]);
+      // Get courses first
+      const coursesRes = await courseAPI.getAll();
       setCourses(coursesRes.data);
+
+      // Get program requirements using the new user fields
+      // Map primaryDiscipline to program code format
+      const disciplineToProgramCode = {
+        'CSE': 'BTech_CSE',
+        'AI': 'BTech_AI',
+        'EE': 'BTech_EE',
+        'ME': 'BTech_ME',
+        'CL': 'BTech_CL',
+        'CE': 'BTech_CE',
+        'MSE': 'BTech_MSE',
+        'ICDT': 'BTech_ICDT'
+      };
+
+      // Get the program code from the user's primaryDiscipline
+      const programCode = user?.primaryDiscipline 
+        ? disciplineToProgramCode[user.primaryDiscipline] || 'BTech_CSE'
+        : 'BTech_CSE';
+
+      const requirementsRes = await programAPI.getRequirements(programCode);
       setProgramRequirements(requirementsRes.data);
+
+      // Get GPA data
+      const gpaRes = await analyticsAPI.getGPA();
       setCpiData(gpaRes.data);
+
     } catch (error) {
+      console.error('Dashboard fetch error:', error);
       toast.error('Failed to load dashboard data');
     } finally {
       setLoading(false);
@@ -41,21 +64,7 @@ export default function DashboardPage() {
   const basketCredits = getCreditsByBasket(completedCourses);
   const cpi = calculateCPI(completedCourses);
   
-  // Batch-specific logic for curriculum changes
-  const getBatchSpecificRequirements = (program, admissionYear) => {
-    if (program === 'BTech_EE' && admissionYear >= 2025) {
-      return {
-        totalCredits: 172,
-        note: 'EE 341 (4 credits) replaces EE 313 (3 credits)'
-      };
-    }
-    if (admissionYear >= 2025) {
-      return {
-        note: 'ES 119 (Principles of AI) replaces ES 113 (Data Centric Computing)'
-      };
-    }
-    return {};
-  };
+  const totalRequired = programRequirements?.totalCreditsRequired || 170;
 
   const getSemesterCreditsData = () => {
     const semesterCredits = {};
@@ -67,7 +76,6 @@ export default function DashboardPage() {
   };
 
   const semesterCreditsData = getSemesterCreditsData();
-  const totalRequired = programRequirements?.totalCreditsRequired || 170;
 
   if (loading) {
     return (
@@ -81,7 +89,13 @@ export default function DashboardPage() {
     <div className="container-responsive py-4 md:py-8">
       <div className="mb-4 md:mb-6">
         <h1 className="text-2xl md:text-3xl font-bold text-gray-800">Dashboard</h1>
-        <p className="text-sm md:text-base text-gray-500">{programList[user?.program]?.name || user?.program}</p>
+        <p className="text-sm md:text-base text-gray-500">
+          {user?.programName || user?.primaryDiscipline || 'Student'}
+        </p>
+        {/* Show course count for debugging */}
+        <p className="text-xs text-gray-400 mt-1">
+          {completedCourses.length} completed courses • {courses.filter(c => c.isPlanned).length} planned
+        </p>
       </div>
 
       <CPIWarning cpi={cpi} />
@@ -138,23 +152,27 @@ export default function DashboardPage() {
         {/* Basket Progress */}
         <div className="bg-white rounded-lg shadow-md p-4 md:p-6">
           <h2 className="text-lg md:text-xl font-semibold mb-3 md:mb-4">Basket Progress</h2>
-          <div className="space-y-3 md:space-y-4">
-            {basketOrder.slice(0, 5).map(basket => {
-              const requirement = programRequirements?.basketRequirements?.find(r => r.basketName === basket);
-              const target = requirement?.minCredits || 0;
-              const current = basketCredits[basket] || 0;
-              if (target === 0 && current === 0) return null;
-              return (
-                <ProgressBar
-                  key={basket}
-                  label={basket}
-                  current={current}
-                  target={target}
-                  color={basketLabels[basket]?.color || 'blue'}
-                />
-              );
-            })}
-          </div>
+          {Object.keys(basketCredits).length > 0 ? (
+            <div className="space-y-3 md:space-y-4">
+              {basketOrder.slice(0, 5).map(basket => {
+                const requirement = programRequirements?.basketRequirements?.find(r => r.basketName === basket);
+                const target = requirement?.minCredits || 0;
+                const current = basketCredits[basket] || 0;
+                if (target === 0 && current === 0) return null;
+                return (
+                  <ProgressBar
+                    key={basket}
+                    label={basket}
+                    current={current}
+                    target={target}
+                    color={basketLabels[basket]?.color || 'blue'}
+                  />
+                );
+              })}
+            </div>
+          ) : (
+            <p className="text-gray-500 text-center py-4">Add courses to see basket progress</p>
+          )}
         </div>
 
         {/* Credits per Semester */}
@@ -214,7 +232,7 @@ export default function DashboardPage() {
             </table>
           </div>
         ) : (
-          <p className="text-gray-500 text-center py-4">No courses added yet</p>
+          <p className="text-gray-500 text-center py-4">No courses added yet. Go to Course History to add courses.</p>
         )}
       </div>
     </div>
