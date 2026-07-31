@@ -26,7 +26,7 @@ export const AuthProvider = ({ children }) => {
           try { localStorage.setItem('user', JSON.stringify(user)); } catch (e) {}
         }
       } catch (e) {
-        console.log('No active session:', e.message);
+        console.log('No active session');
       } finally {
         setLoading(false);
       }
@@ -37,13 +37,14 @@ export const AuthProvider = ({ children }) => {
     try {
       const res = await api.post('/auth/login', { email, password });
       const { accessToken, user } = res.data;
+      
       if (accessToken) {
         api.defaults.headers.common['Authorization'] = `Bearer ${accessToken}`;
         localStorage.setItem('token', accessToken);
       }
       if (user) {
         setUser(user);
-        try { localStorage.setItem('user', JSON.stringify(user)); } catch (e) {}
+        localStorage.setItem('user', JSON.stringify(user));
       }
       toast.success('Logged in successfully!');
       return true;
@@ -54,7 +55,6 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  // ✅ FIXED: Updated signup to match backend expectations
   const signup = async (email, password, program, admissionYear) => {
     try {
       // Map old program codes to new discipline format
@@ -67,16 +67,14 @@ export const AuthProvider = ({ children }) => {
         'BTech_CE': 'CE',
         'BTech_MSE': 'MSE',
         'BTech_ICDT': 'ICDT',
-        'BTech_DoubleMajor': 'CSE', // Default to CSE for dual major
+        'BTech_DoubleMajor': 'CSE',
         'BTech_MTech_Dual': 'CSE',
         'BTech_MSc_Dual': 'CSE'
       };
       
-      // Extract discipline from program code
       let primaryDiscipline = disciplineMap[program] || 'CSE';
-      
-      // Determine program type
       let programType = 'BTech';
+      
       if (program === 'BTech_DoubleMajor') programType = 'DualMajor';
       else if (program === 'BTech_MTech_Dual') programType = 'DualDegree';
       else if (program === 'BTech_MSc_Dual') programType = 'MScDual';
@@ -86,7 +84,7 @@ export const AuthProvider = ({ children }) => {
         password,
         primaryDiscipline,
         programType,
-        secondaryDiscipline: '', // For dual programs, user will set later
+        secondaryDiscipline: '',
         admissionYear: admissionYear || 2026,
         currentSemester: 1,
         pursuingHonours: false,
@@ -95,13 +93,14 @@ export const AuthProvider = ({ children }) => {
       });
       
       const { accessToken, user } = res.data;
+      
       if (accessToken) {
         api.defaults.headers.common['Authorization'] = `Bearer ${accessToken}`;
         localStorage.setItem('token', accessToken);
       }
       if (user) {
         setUser(user);
-        try { localStorage.setItem('user', JSON.stringify(user)); } catch (e) {}
+        localStorage.setItem('user', JSON.stringify(user));
       }
       toast.success('Account created successfully!');
       return true;

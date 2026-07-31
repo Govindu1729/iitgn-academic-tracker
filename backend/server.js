@@ -110,38 +110,38 @@ app.use(helmet({
 app.use(cookieParser());
 
 // Body parser
-app.use(express.json({ limit: '100mb' }));
+app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
-// ==================== RATE LIMITING ====================
-// Global rate limiter
-const globalLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 300, // limit each IP to 200 requests per windowMs
-  standardHeaders: true,
-  legacyHeaders: false,
-  handler: (req, res) => {
-    logger.warn('Rate limit exceeded for IP: %s', req.ip);
-    res.status(429).json({ 
-      message: 'Too many requests, please try again later.' 
-    });
-  }
-});
-app.use(globalLimiter);
+// // ==================== RATE LIMITING ====================
+// // Global rate limiter
+// const globalLimiter = rateLimit({
+//   windowMs: 15 * 60 * 1000, // 15 minutes
+//   max: 300, // limit each IP to 200 requests per windowMs
+//   standardHeaders: true,
+//   legacyHeaders: false,
+//   handler: (req, res) => {
+//     logger.warn('Rate limit exceeded for IP: %s', req.ip);
+//     res.status(429).json({ 
+//       message: 'Too many requests, please try again later.' 
+//     });
+//   }
+// });
+// app.use(globalLimiter); 
 
-// Stricter limiter for auth endpoints
-const authLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 300, // limit each IP to 10 requests per windowMs
-  standardHeaders: true,
-  legacyHeaders: false,
-  handler: (req, res) => {
-    logger.warn('Auth rate limit exceeded for IP: %s', req.ip);
-    res.status(429).json({ 
-      message: 'Too many authentication attempts, please try again later.' 
-    });
-  }
-});
+// // Stricter limiter for auth endpoints
+// const authLimiter = rateLimit({
+//   windowMs: 15 * 60 * 1000, // 15 minutes
+//   max: 300, // limit each IP to 10 requests per windowMs
+//   standardHeaders: true,
+//   legacyHeaders: false,
+//   handler: (req, res) => {
+//     logger.warn('Auth rate limit exceeded for IP: %s', req.ip);
+//     res.status(429).json({ 
+//       message: 'Too many authentication attempts, please try again later.' 
+//     });
+//   }
+// });
 
 // ==================== REQUEST LOGGING ====================
 // Log all requests in development

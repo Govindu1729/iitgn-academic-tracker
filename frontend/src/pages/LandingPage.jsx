@@ -1,3 +1,4 @@
+// frontend/src/pages/LandingPage.jsx
 import { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
@@ -12,7 +13,6 @@ export default function LandingPage() {
   const { login, signup, user } = useAuth();
   const navigate = useNavigate();
 
-  // Use useEffect for navigation instead of doing it during render
   useEffect(() => {
     if (user) {
       navigate('/dashboard');
@@ -27,9 +27,7 @@ export default function LandingPage() {
     } else {
       success = await signup(email, password, program, admissionYear);
     }
-    if (success) {
-      navigate('/dashboard');
-    }
+    // Don't navigate here, the AuthContext handles it or the useEffect above
   };
 
   return (
