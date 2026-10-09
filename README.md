@@ -34,3 +34,7 @@ cd frontend
 npm install
 npm run dev
 # IITGN Academic Tracker - Update
+Backup Data :
+npx supabase db dump --db-url 'postgresql://postgres:[YOUR-PASSWORD]@db.hterlbpembhbyyffdith.supabase.co:5432/postgres' -f roles.sql --role-only
+npx supabase db dump --db-url 'postgresql://postgres:[YOUR-PASSWORD]@db.hterlbpembhbyyffdith.supabase.co:5432/postgres' -f schema.sql
+npx supabase db dump --db-url 'postgresql://postgres:[YOUR-PASSWORD]@db.hterlbpembhbyyffdith.supabase.co:5432/postgres' -f data.sql --use-copy --data-only -x "storage.buckets_vectors" -x "storage.vector_indexes"
